@@ -9,7 +9,7 @@ This skill owns profile wiring and activation evidence. It is guidance, not perm
 
 ## Sources of truth
 
-Read the current DSH [`CLI reference`](../../../../deepseek-harness/apps/cli/reference/README.md), [`app-boot` profile contract](../../../../deepseek-harness/packages/boot/app-boot/README.md), [`bundle README`](../../../../deepseek-harness/packages/bundle/README.md), and target package manifest. Verify commands against the installed DSH version.
+Read the project-root files `README.md`, `AGENTS.md`, and `docs/dsh-plugin-contracts.md`, plus the target package manifest. Use the locally documented profile commands against the installed DSH host; if the host rejects them, report a compatibility blocker rather than reading host source outside the repository.
 
 ## Verify the bundle declaration
 
@@ -51,10 +51,11 @@ Select the base profile that supplies the required services. A custom profile in
 
 Confirm `pnpm` is on `PATH`; `dsh plugin` forwards package-manager operations to it and fails before installation when it is unavailable.
 
-From a local checkout, use DSH's profile package manager so relative specs are anchored to the invoking directory:
+Install a packed artifact, registry version, or user-approved Git spec through DSH's profile package manager. Do not use a repository-relative `link:` or `file:` spec; the package must first prove that its own artifact is complete:
 
 ```sh
-dsh plugin --profile <profile> add link:<plugin-path>
+pnpm pack
+# pass the generated archive, registry spec, or approved Git spec to dsh plugin
 ```
 
 For Git installation, use the user-approved Git spec. pnpm 10 and later block dependency lifecycle builds until allowed: a source package with `prepare` may fail the first installation and print the exact `allowBuilds` key. Add only that printed key to the profile's `pnpm-workspace.yaml`, then rerun the unchanged install. Do not guess or broadly allow build scripts.
@@ -76,7 +77,7 @@ Confirm the expected bundle source comment, inserted rows, overridden full confi
 
 Boot through the actual intended runner or application entry. Observe an effect specific to plugin activation, not only package resolution or a generic log from another row. For a long-lived TUI/Web process, use a managed background task or the environment's designated terminal/tmux workflow, collect its output, and dispose it cleanly after the smoke.
 
-Composition proves that the layer resolves, mounts, and disposes. Behavioral correctness belongs to [`dsh-plugin-test`](../dsh-plugin-test/SKILL.md), including real-composition assertions for product-visible plugins.
+Composition proves that the layer resolves, mounts, and disposes. Behavioral correctness belongs to `dsh-plugin-test` at `.agents/skills/dsh-plugin-test/SKILL.md`, including real-composition assertions for product-visible plugins.
 
 ## Composition exit condition
 

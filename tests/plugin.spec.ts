@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import Loader from '@cordisjs/plugin-loader'
 import { Context } from 'cordis'
 import * as plugin from '../src/index.ts'
+import * as invariant from '../src/invariant.ts'
+import { createPluginHarness } from './harness.ts'
 
 describe('@your-scope/dsh-plugin-template', () => {
   it('preserves the function-plugin namespace through Loader unwrapping', () => {
@@ -17,22 +19,30 @@ describe('@your-scope/dsh-plugin-template', () => {
   })
 
   it('applies with schema defaults', async () => {
-    const ctx = new Context()
-    const info = vi.spyOn(ctx.logger, 'info').mockImplementation(() => undefined)
-
-    const fiber = await ctx.plugin(plugin, {})
-    expect(info).toHaveBeenCalledWith('DSH plugin template loaded')
-
-    await fiber.dispose()
+    const harness = await createPluginHarness()
+    expect(harness.info).toHaveBeenCalledWith('DSH plugin template loaded')
+    await harness.dispose()
   })
 
   it('accepts composition configuration', async () => {
-    const ctx = new Context()
-    const info = vi.spyOn(ctx.logger, 'info').mockImplementation(() => undefined)
+    const harness = await createPluginHarness({ message: 'hello from a profile' })
+    expect(harness.info).toHaveBeenCalledWith('hello from a profile')
+    await harness.dispose()
+  })
 
-    const fiber = await ctx.plugin(plugin, { message: 'hello from a profile' })
-    expect(info).toHaveBeenCalledWith('hello from a profile')
+  it('registers the invariant companion through its local host contract', async () => {
+    const ctx = new Context()
+    const unregister = vi.fn()
+    const register = vi.fn<(packageName: string, installer: unknown) => () => void>(() => unregister)
+    const removeService = ctx.provide('invariants', { register })
+
+    const fiber = await ctx.plugin(invariant)
+    expect(register).toHaveBeenCalledTimes(1)
+    expect(register.mock.calls[0]?.[0]).toBe('@your-scope/dsh-plugin-template')
+    expect(typeof register.mock.calls[0]?.[1]).toBe('function')
 
     await fiber.dispose()
+    expect(unregister).toHaveBeenCalledTimes(1)
+    await removeService()
   })
 })

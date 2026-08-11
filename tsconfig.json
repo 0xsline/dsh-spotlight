@@ -1,22 +1,8 @@
 {
-  "extends": "../deepseek-harness/tsconfig.base.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "rootDir": "src",
-    "outDir": "lib/types",
-    "paths": {
-      "cordis": ["../deepseek-harness/vendor/cordis/src"],
-      "schemastery": ["../deepseek-harness/vendor/schemastery/src"],
-      "@deepseek-ai/dsh-invariants": ["../deepseek-harness/packages/support/invariants/src/index.ts"],
-      "@your-scope/dsh-plugin-template": ["src/index.ts"],
-      "@your-scope/dsh-plugin-template/*": ["src/*"]
-    }
+    "outDir": "lib/types"
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../deepseek-harness/vendor/cordis" },
-    { "path": "../deepseek-harness/vendor/schemastery" },
-    { "path": "../deepseek-harness/packages/support/invariants" }
-  ]
+  "include": ["src"]
 }

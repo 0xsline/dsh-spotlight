@@ -9,9 +9,11 @@ This skill applies the implementation rules shared by official DSH plugins. It i
 
 ## Read current owners
 
-Read the target `AGENTS.md`, [`plugin-template`](../../../README.md), DSH root and package instructions, and the current service-definition source for each dependency. Read [`architecture.md`](../../../../deepseek-harness/docs/architecture.md) before changing service relationships and [`defensive-patterns.md`](../../../../deepseek-harness/docs/defensive-patterns.md) before lifecycle, cancellation, concurrency, subprocess, watcher, or teardown code.
+Read the target project-root files `AGENTS.md`, `README.md`, `src/README.md`, and `docs/dsh-plugin-contracts.md`. Inspect only declarations installed below the repository root for every imported API and record the exact host-facing service contract in the package README before changing service relationships or lifecycle code. Stop when a required contract is absent; do not read another checkout.
 
-For tool plugins, follow the current [`adding-a-tool` cookbook](../../../../deepseek-harness/docs/cookbook/adding-a-tool.md). Use [`SDK-API-全览.md`](../../../../SDK-API-全览.md) only as a discovery aid and verify names against source before importing them.
+Keep `src/index.ts` as the Loader boundary, configuration in `src/config.ts`, and fakeable host/process boundaries plus activation in `src/runtime.ts`. Move cohesive behavior to capability-named `src/<feature>/` directories only when the implementation warrants the split.
+
+For tool plugins, define the tool's render intent, locations, input schema, and visible output in the package README and tests. Do not rely on a workspace-only cookbook or SDK index; the package must contain the contract it needs.
 
 ## Preserve the selected plugin form
 
@@ -33,7 +35,7 @@ For a service plugin, default-export the `Service` subclass and use the class's 
 
 List every required service in `inject` before reading `ctx.<service>`. Read an optional service through `ctx.get(name)`; use scoped `ctx.inject` when behavior must attach and detach as that optional service appears. Extend `cordis` through declaration merging only when the package actually defines a context service or typed event.
 
-Use package names across package boundaries and `.ts` extensions for local relative imports. Keep DSH/Cordis runtime APIs as peers, external implementation libraries in `dependencies`, and development resolution aligned with the sibling DSH checkout. Add no dependency, path alias, or project reference without a production import.
+Use package names across package boundaries and `.ts` extensions for local relative imports. Keep host-provided Cordis APIs as peers, external implementation libraries in `dependencies`, and development resolution through this repository's declared dependencies. Add no dependency, path alias, or project reference without a production import; never add a path that leaves the repository.
 
 ## Validate configuration and failures
 

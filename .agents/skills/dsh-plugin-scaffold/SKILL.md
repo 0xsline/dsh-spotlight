@@ -1,15 +1,15 @@
 ---
 name: dsh-plugin-scaffold
-description: Use after dsh-plugin-plan to create a new standalone DSH plugin repository from plugin-template. Copy only source-controlled template files, replace package and Cordis identifiers, align dependencies and sibling-checkout paths, generate the lockfile, and prove the unchanged skeleton before behavior is added.
+description: Use after dsh-plugin-plan to create a new standalone DSH plugin repository from this self-contained template. Copy only source-controlled template files, replace package and Cordis identifiers, align registry dependencies and local TypeScript settings, generate the lockfile, and prove the unchanged skeleton before behavior is added.
 ---
 
 # Scaffold a Plugin Repository
 
-This skill creates a clean standalone repository from [`plugin-template`](../../../README.md). It is guidance, not a blind copy script: inspect the source and target first, preserve the template's build split, and stop rather than overwriting an existing non-empty directory.
+This skill creates a clean standalone repository from the project-root `README.md` contract. It is guidance, not a blind copy script: inspect the source and target first, preserve the template's build split, and stop rather than overwriting an existing non-empty directory.
 
 ## Required handoff
 
-Require `target`, `packageName`, `pluginId`, description, plugin form, dependency matrix, target profile, invariant decision, distribution assumption, and the template location. Default the template location only when `plugin-template` exists at the workspace root. If the target exists and is non-empty, ask whether this is an audit/merge task; never replace it as scaffolding.
+Require `target`, `packageName`, `pluginId`, description, plugin form, dependency matrix, target profile, invariant decision, distribution assumption, and the template source directory. Default the source to the active repository root only when its `package.json` and `README.md` match this template. If the target exists and is non-empty, ask whether this is an audit/merge task; never replace it as scaffolding.
 
 Validate names before copying:
 
@@ -23,44 +23,48 @@ Validate names before copying:
 Copy source-controlled template files while excluding `.git/`, `node_modules/`, `lib/`, temporary files, and package-manager stores. Do not use an unguarded recursive delete. Preserve these two build paths:
 
 - development/CI: `tsc -b` emits declarations into `lib/types`, then `tsdown.config.ts` bundles those emitted modules;
-- Git installation: `tsdown.prepare.config.ts` bundles directly from `src` with `tsconfig.prepare.json`, without sibling project references or typechecking.
+- Git/tarball installation: `scripts/prepare.mjs` emits declarations with `tsconfig.prepare.dts.json`, then `tsdown.prepare.config.ts` bundles directly from `src` with `tsconfig.prepare.json`.
 
-Preserve the pinned Node, pnpm, Cordis, TypeScript, Vitest, and tsdown ranges from the current template unless current DSH source requires a coordinated update. Do not replace them with `latest`.
+Both paths must resolve only files and dependencies declared inside the repository; neither may use a repository-external project reference.
+
+Preserve the scalable skeleton: `src/config.ts`, `src/runtime.ts`, `src/README.md`, `tests/harness.ts`, `tests/README.md`, `tests/snapshots/README.md`, and `patches/README.md`. These are the baseline separation and local contracts for feature modules, shared test composition, visible-output fixtures, and exact-version dependency patches; do not copy Turtle UI product-specific directories unless the planned plugin owns those capabilities.
+
+Preserve the pinned Node, pnpm, Cordis, TypeScript, Vitest, and tsdown ranges from the current template unless an explicitly recorded host compatibility decision requires a coordinated update. Do not replace them with `latest`.
 
 ## Replace template identity
 
 Update identity deliberately in these owners:
 
 - `package.json`: `name`, `description`, optional repository metadata, exports/files, and `private` according to the distribution plan;
-- `src/index.ts`: module name, exported `name`, configuration description, and placeholder behavior;
+- `src/index.ts`: module name, exported `name`, and Loader-facing exports;
+- `src/config.ts` and `src/runtime.ts`: module paths, configuration description, defaults, and placeholder behavior;
 - `src/invariant.ts`: module path, exact `PACKAGE_NAME`, companion plugin name, and invariant explanation;
 - `tests/plugin.spec.ts`: package description, expected plugin id, configuration assertions;
 - `cordis.patch.yml`: package names, deployment-local row ids, and planned configuration;
-- `tsconfig.json` and `tsconfig.vitest.json`: self-package path aliases;
+- `tsconfig.base.json`, `tsconfig.json`, `tsconfig.vitest.json`, `tsconfig.prepare*.json`, and `scripts/*.mjs`: local compiler, artifact, and boundary-verification topology;
 - `README.md`, `AGENTS.md`, and `LICENSE`: package-specific contract and ownership rather than template instructions.
 
-Search afterward for all template markers:
+Search afterward for all template markers in identity owners, excluding this reusable skill suite:
 
 ```sh
 grep -R -n -E '@your-scope/dsh-plugin-template|plugin-template|Plugin Authors' \
-  --exclude-dir=node_modules --exclude-dir=lib .
+  --exclude-dir=node_modules --exclude-dir=lib --exclude-dir=.agents \
+  package.json src tests cordis.patch.yml README.md AGENTS.md tsconfig*.json
 ```
 
-Review each match; do not suppress a remaining load-visible placeholder because it appears in documentation.
+Review each match; do not suppress a remaining load-visible placeholder because it appears in documentation. Generic references inside `.agents/skills/` are intentionally not identity owners.
 
 ## Align dependencies and TypeScript
 
-For every planned DSH import, update these together:
+For every planned host API import, update these together:
 
-1. `peerDependencies` for runtime-provided DSH/Cordis APIs;
-2. a reachable development source in `devDependencies` when needed;
-3. `tsconfig.json` source mappings and project references;
-4. `tsconfig.vitest.json` source mappings or the current Vitest resolver configuration;
+1. `peerDependencies` for runtime-provided Cordis/host APIs;
+2. a reachable registry development dependency when the package must typecheck or test against it;
+3. local TypeScript settings and package declarations;
+4. `tsconfig.vitest.json` and the Vitest resolver when test aliases are needed;
 5. `inject` and `cordis.patch.yml` when the service must be composed.
 
-Use `dependencies` for libraries bundled or required by the plugin at runtime. Keep optional peers explicit. A local `link:../deepseek-harness/...` development dependency is valid only while the sibling topology exists; replace every non-portable link before a Git-install or npm release smoke.
-
-If the target is not a sibling of `deepseek-harness`, adjust `package.json`, both TypeScript configs, and any test resolution together. The self-contained prepare config must not inherit the sibling DSH base config.
+Use `dependencies` for libraries bundled or required by the plugin at runtime. Keep optional peers explicit. This template forbids local `link:` and `file:` dependencies and forbids project references that leave the repository. Every fresh clone must resolve its build graph from its own manifest and lockfile.
 
 ## Establish repository state
 
@@ -74,9 +78,11 @@ Before adding product behavior, run from the target repository:
 
 ```sh
 pnpm install
+pnpm run verify:self-contained
 pnpm run typecheck
 pnpm test
 pnpm run build
+pnpm run prepare
 ```
 
 If the execution sandbox, network, native build, or package-manager state blocks one command, preserve its exact failure and retry unchanged only through the environment's approved narrow escalation path. Do not rewrite dependencies to hide an environmental denial.

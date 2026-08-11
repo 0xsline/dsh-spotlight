@@ -1,8 +1,9 @@
 import { defineConfig } from 'tsdown'
 
 /**
- * Consumer-side build for git installs. It transpiles source without the
- * sibling DSH project references; development and CI own type checking.
+ * Consumer-side runtime bundle for Git and tarball installs. The prepare
+ * script emits declarations first, then this config bundles source without any
+ * repository project references.
  */
 export default defineConfig({
   entry: {
@@ -15,6 +16,6 @@ export default defineConfig({
   target: 'es2024',
   fixedExtension: false,
   dts: false,
-  clean: true,
+  clean: false,
   tsconfig: 'tsconfig.prepare.json',
 })

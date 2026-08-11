@@ -9,7 +9,7 @@ This skill selects evidence for the plugin's actual entry paths. It is guidance,
 
 ## Read the test owners
 
-Read the target tests, [`plugin-template/tests/plugin.spec.ts`](../../../tests/plugin.spec.ts), current DSH [`testing policy`](../../../../deepseek-harness/docs/testing.md), and package test rules. Inspect an official plugin with the same role when available. Tests live under `tests/`, not `src/__tests__/`.
+Read the project-root files `tests/README.md`, `tests/harness.ts`, `tests/plugin.spec.ts`, `README.md`, `AGENTS.md`, and `docs/dsh-plugin-contracts.md`. Tests live under `tests/`, not `src/__tests__/`. A consuming DSH host may add composition-specific tests, but the template's own evidence must run from this repository alone.
 
 ## Required evidence map
 
@@ -58,7 +58,7 @@ A hand-built sequence of `ctx.plugin(...)` calls is useful unit coverage but doe
 
 ## 6. Snapshot visible behavior
 
-Stable user- or model-visible text is behavior. Add the focused keyless snapshot owned by the actual example/runner and review expected output semantically. Keep fixtures portable across Linux and macOS; fix nondeterministic scenarios rather than normalizing away meaningful differences.
+Stable user- or model-visible text is behavior. Put focused keyless fixtures under `tests/snapshots/`, make the actual example/runner own each fixture, and review expected output semantically. Keep fixtures portable across Linux and macOS; fix nondeterministic scenarios rather than normalizing away meaningful differences. Follow the inventory and refresh rules in `tests/snapshots/README.md`.
 
 Follow `AGENTS.md` in a UI plugin repository for its required demonstration channel. In particular, a TUI may require tmux presentation rather than transcript rendering.
 
@@ -67,14 +67,16 @@ Follow `AGENTS.md` in a UI plugin repository for its required demonstration chan
 Run the target package commands:
 
 ```sh
+pnpm run verify:self-contained
 pnpm run typecheck
 pnpm test
 pnpm run build
+pnpm run prepare
 ```
 
-After build, import each public runtime entry from `lib/` under plain Node and verify the expected ESM exports. Run `pnpm run prepare` separately when Git installation is supported; remember that prepare transpiles and bundles but does not replace the development typecheck.
+After build, import each public runtime entry from `lib/` under plain Node and verify the expected ESM exports. Run `pnpm run prepare` separately when Git or tarball installation is supported; verify both runtime entries and declarations after prepare. Prepare is an artifact check and does not replace the full development typecheck.
 
-Use `pnpm pack --dry-run --json` to inspect files only in the release stage or when exports/files changed. A packed-consumer or Git-install smoke belongs to [`dsh-plugin-release`](../dsh-plugin-release/SKILL.md).
+Use `pnpm pack --dry-run --json` to inspect files only in the release stage or when exports/files changed. A packed-consumer or Git-install smoke belongs to `dsh-plugin-release` at `.agents/skills/dsh-plugin-release/SKILL.md`.
 
 ## Select commands narrowly
 

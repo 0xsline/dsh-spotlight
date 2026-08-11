@@ -11,9 +11,6 @@ importers:
       '@cordisjs/plugin-loader':
         specifier: ^1.0.0-rc.5
         version: 1.0.0-rc.5(cordis@4.0.0-rc.7)
-      '@deepseek-ai/dsh-invariants':
-        specifier: link:../deepseek-harness/packages/support/invariants
-        version: link:../deepseek-harness/packages/support/invariants
       '@types/node':
         specifier: ^22.20.0
         version: 22.20.1

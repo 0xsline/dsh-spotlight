@@ -9,7 +9,7 @@ This skill turns a requested capability into explicit package decisions. It is g
 
 ## Sources of truth
 
-Read the current [`plugin-template`](../../../README.md), DSH [`architecture`](../../../../deepseek-harness/docs/architecture.md), [`Cordis primer`](../../../../deepseek-harness/docs/cordis-primer.md), root [`AGENTS.md`](../../../../deepseek-harness/AGENTS.md), and package [`AGENTS.md`](../../../../deepseek-harness/packages/AGENTS.md). Inspect the current service definitions the plugin will consume; copied examples and package names are discovery hints, not authority.
+Read the project-root files `README.md`, `AGENTS.md`, and `docs/dsh-plugin-contracts.md`. Inspect only package declarations installed below this repository root. If a required host contract is not represented there, stop until an approved registry dependency or local contract file is added to the repository; never traverse to another checkout.
 
 ## Confirm the request
 
@@ -34,7 +34,7 @@ For every imported DSH service or package, record:
 | Availability | Required or optional |
 | Cordis access | `inject` + `ctx.<service>`, or optional `ctx.get(name)`/scoped `ctx.inject` |
 | Manifest | Peer dependency and development source |
-| TypeScript | Source path mapping and project reference |
+| TypeScript | Local compiler configuration and installed package declarations |
 | Composition | Existing base row or inserted bundle row |
 | Test support | Real provider, focused fake, or composition fixture |
 
@@ -46,11 +46,15 @@ List each field with its type, validation, default or required status, evidence 
 
 Plan fail-loud behavior for self-contained misconfiguration at plugin load, and for environment-dependent failures at the earliest point where the environment can be judged.
 
+## Choose the repository structure
+
+Keep the baseline boundaries `src/index.ts`, `src/config.ts`, `src/runtime.ts`, `tests/harness.ts`, and `tests/plugin.spec.ts` focused. Record whether complexity justifies a capability-named `src/<feature>/` directory, additional shared harness support, visible fixtures under `tests/snapshots/`, or exact-version dependency patches under `patches/`. Do not pre-create directories copied from another plugin's product domains.
+
 ## Define ownership and lifecycle
 
-Name every registration, listener, process, timer, watcher, callback, or asynchronous operation the plugin owns. Specify how the plugin fiber disposes it and what quiescent disposal means. For concurrency, subprocesses, cancellation, or teardown, read [`defensive-patterns.md`](../../../../deepseek-harness/docs/defensive-patterns.md) before approving the design.
+Name every registration, listener, process, timer, watcher, callback, or asynchronous operation the plugin owns. Specify how the plugin fiber disposes it and what quiescent disposal means. Apply the lifecycle and cancellation rules in the project-root file `docs/dsh-plugin-contracts.md` before approving the design.
 
-If the plugin adds model-visible input, plan the durable session event that makes it reconstructable. If it adds a tool, decide its UI render intent and locations before implementation using the current [`adding-a-tool` cookbook](../../../../deepseek-harness/docs/cookbook/adding-a-tool.md).
+If the plugin adds model-visible input, plan the durable session event that makes it reconstructable. If it adds a tool, decide its UI render intent and locations before implementation and record the host-facing render contract in the package README.
 
 ## Decide the invariant companion
 
@@ -75,4 +79,4 @@ Choose the smallest tiers that can prove the behavior:
 
 ## Planning output
 
-Return an updated handoff compatible with [`dsh-plugin-development`](../dsh-plugin-development/SKILL.md), plus a short list of rejected alternatives only when they affect implementation. Planning is complete only when `pluginForm`, roles, dependency matrix, configuration, lifecycle ownership, invariant, bundle rows, test tiers, and distribution assumption contain no unresolved decision that blocks scaffolding.
+Return an updated handoff compatible with `dsh-plugin-development` at `.agents/skills/dsh-plugin-development/SKILL.md`, plus a short list of rejected alternatives only when they affect implementation. Planning is complete only when `pluginForm`, roles, dependency matrix, configuration, lifecycle ownership, invariant, bundle rows, test tiers, and distribution assumption contain no unresolved decision that blocks scaffolding.
