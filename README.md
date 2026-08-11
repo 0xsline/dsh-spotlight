@@ -6,6 +6,9 @@ A minimal standalone repository template distilled from the official Turtle UI p
 
 ```text
 .
+├── .agents/skills/              # Repository-local plugin development workflow
+│   ├── dsh-plugin-development/  # End-to-end coordinator
+│   └── dsh-plugin-*/            # Plan, scaffold, implement, compose, test, release
 ├── src/
 │   ├── index.ts                 # Function plugin: name/inject/Config/apply
 │   └── invariant.ts             # Package-owned invariant companion
@@ -31,6 +34,21 @@ A minimal standalone repository template distilled from the official Turtle UI p
 8. Set `private` to `false` only when the package is ready to publish.
 
 Do not add a default export to a function plugin. Cordis Loader unwraps `exports.default ?? exports`; a stray default export discards namespace exports such as `inject`, `Config`, and `apply`.
+
+## Bundled development skills
+
+DSH discovers the repository-local workflow under `.agents/skills/`. Start with `dsh-plugin-development` for the complete sequence, or invoke one stage directly:
+
+| Skill | Purpose |
+|---|---|
+| `dsh-plugin-plan` | Decide plugin form, dependencies, configuration, invariant, composition, and evidence. |
+| `dsh-plugin-scaffold` | Instantiate and baseline-verify a new repository from this template. |
+| `dsh-plugin-implement` | Implement lifecycle-safe Cordis behavior, metadata, docs, and invariants. |
+| `dsh-plugin-compose` | Install the bundle into an isolated profile and prove effective activation. |
+| `dsh-plugin-test` | Verify Loader exports, behavior, disposal, composition, snapshots, and artifacts. |
+| `dsh-plugin-release` | Check local, Git, or npm distribution readiness without publishing implicitly. |
+
+Keep these directories when copying the template so future sessions rooted in the plugin repository retain the same workflow.
 
 ## Development layout
 

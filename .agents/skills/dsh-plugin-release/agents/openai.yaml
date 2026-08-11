@@ -1,0 +1,4 @@
+interface:
+  display_name: "Release DSH Plugin"
+  short_description: "Validate plugin distribution without publishing"
+  default_prompt: "Use $dsh-plugin-release to prove this plugin is ready for its selected local, Git, or npm distribution channel without publishing it."

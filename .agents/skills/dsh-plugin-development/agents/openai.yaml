@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop DSH Plugin"
+  short_description: "Run the complete standalone DSH plugin workflow"
+  default_prompt: "Use $dsh-plugin-development to develop this standalone DSH plugin from planning through verified release readiness."

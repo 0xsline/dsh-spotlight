@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scaffold DSH Plugin"
+  short_description: "Create a plugin repository from plugin-template"
+  default_prompt: "Use $dsh-plugin-scaffold to create and baseline-verify a new standalone plugin repository from plugin-template."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement DSH Plugin"
+  short_description: "Implement a lifecycle-safe Cordis plugin"
+  default_prompt: "Use $dsh-plugin-implement to implement the planned standalone DSH plugin and its invariant, docs, and focused tests."

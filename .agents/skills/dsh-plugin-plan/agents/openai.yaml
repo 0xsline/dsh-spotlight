@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan DSH Plugin"
+  short_description: "Design a standalone DSH plugin before coding"
+  default_prompt: "Use $dsh-plugin-plan to define this plugin's form, dependencies, configuration, invariant, composition, and test plan."

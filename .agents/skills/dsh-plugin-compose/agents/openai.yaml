@@ -1,0 +1,4 @@
+interface:
+  display_name: "Compose DSH Plugin"
+  short_description: "Wire and activate a plugin in a DSH profile"
+  default_prompt: "Use $dsh-plugin-compose to install this plugin into an isolated profile, inspect the effective configuration, and prove activation."

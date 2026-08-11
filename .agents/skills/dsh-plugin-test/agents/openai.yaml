@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test DSH Plugin"
+  short_description: "Prove Loader, lifecycle, composition, and artifacts"
+  default_prompt: "Use $dsh-plugin-test to select and run the smallest complete evidence for this standalone DSH plugin."
