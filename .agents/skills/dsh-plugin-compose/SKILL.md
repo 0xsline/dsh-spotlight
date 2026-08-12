@@ -39,7 +39,7 @@ Apply these rules before installation:
 - Keep credentials out of patches; use credential references or environment-variable names.
 - An empty or comments-only patch is invalid because it parses to no list. Use `[]` for an intentionally empty layer.
 
-`cordis.patch.yml` cannot edit DSH source files, compiler settings, build scripts, generated catalogs, CLI routing, or runtime boot code. If behavior requires those changes, stop and classify it as a DSH host change rather than hiding it in plugin installation instructions.
+`cordis.patch.yml` cannot edit DSH source files, compiler settings, build scripts, generated catalogs, CLI routing, or runtime boot code. If behavior requires those changes, stop and classify it as a DSH host change, carried as a documented patch under `patches/` (see `patches/README.md`), rather than hiding it in plugin installation instructions.
 
 ## Choose an isolated profile
 

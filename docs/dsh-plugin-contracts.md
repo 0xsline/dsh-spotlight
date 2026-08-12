@@ -20,7 +20,7 @@ The baseline source boundary separates `src/index.ts`, `src/config.ts`, `src/run
 
 The baseline test boundary includes `tests/plugin.spec.ts` and the shared real-Cordis mount in `tests/harness.ts`. Add feature-specific `tests/<feature>.spec.ts` files for focused behavior and stable visible-output fixtures under `tests/snapshots/`. Keep snapshot inventory and refresh rules explicit.
 
-`patches/` is an optional project-root directory for exact-version pnpm dependency patches. It must remain empty apart from its local README until `pnpm-workspace.yaml` declares a real `patchedDependencies` entry. Turtle UI's `src/chat/`, `src/components/`, and `src/extension/` are product feature names, not mandatory template directories.
+`patches/` is an optional project-root directory for two kinds of corrections: exact-version pnpm dependency patches (declared in `pnpm-workspace.yaml`) and DSH host patches (self-contained diffs against a pinned host snapshot, applied with `git apply`, never part of the published package). It must remain empty apart from its local README until a real patch exists. Turtle UI's `src/chat/`, `src/components/`, and `src/extension/` are product feature names, not mandatory template directories.
 
 ## Lifecycle ownership
 

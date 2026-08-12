@@ -27,7 +27,7 @@ Copy source-controlled template files while excluding `.git/`, `node_modules/`, 
 
 Both paths must resolve only files and dependencies declared inside the repository; neither may use a repository-external project reference.
 
-Preserve the scalable skeleton: `src/config.ts`, `src/runtime.ts`, `src/README.md`, `tests/harness.ts`, `tests/README.md`, `tests/snapshots/README.md`, and `patches/README.md`. These are the baseline separation and local contracts for feature modules, shared test composition, visible-output fixtures, and exact-version dependency patches; do not copy Turtle UI product-specific directories unless the planned plugin owns those capabilities.
+Preserve the scalable skeleton: `src/config.ts`, `src/runtime.ts`, `src/README.md`, `tests/harness.ts`, `tests/README.md`, `tests/snapshots/README.md`, and `patches/README.md`. These are the baseline separation and local contracts for feature modules, shared test composition, visible-output fixtures, and dependency or DSH-host patches; do not copy Turtle UI product-specific directories unless the planned plugin owns those capabilities.
 
 Preserve the pinned Node, pnpm, Cordis, TypeScript, Vitest, and tsdown ranges from the current template unless an explicitly recorded host compatibility decision requires a coordinated update. Do not replace them with `latest`.
 

@@ -31,7 +31,7 @@ Review every match. This template does not permit repository-relative `link:`, `
 
 Confirm package name, version, description, license, repository metadata, Node engine, package manager, Cordis plugin id, invariant package name, bundle rows, README examples, and lockfile all describe the same package.
 
-If `pnpm-workspace.yaml` declares `patchedDependencies`, verify every project-root patch path exists under `patches/`, targets the exact installed version, has a documented reason, and is available during a clean Git install. If no patch is declared, `patches/` must contain guidance only.
+If `pnpm-workspace.yaml` declares `patchedDependencies`, verify every project-root patch path exists under `patches/`, targets the exact installed version, has a documented reason, and is available during a clean Git install. A DSH host patch under `patches/` must be a self-contained diff with a documented pinned host snapshot and apply/regeneration commands, and must not appear in the published package's `files`. If no patch is declared, `patches/` must contain guidance only.
 
 ## Run package verification
 

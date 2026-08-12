@@ -14,7 +14,7 @@ Normal npm dependencies are resolved from the package registry. A DSH host is a 
 ├── docs/
 │   └── dsh-plugin-contracts.md   # Shared local contract for all plugin skills
 ├── patches/
-│   └── README.md                 # Optional pnpm dependency-patch contract
+│   └── README.md                 # Dependency and DSH-host patch contract
 ├── scripts/
 │   ├── prepare.mjs               # Self-contained declaration and runtime prepare build
 │   └── verify-self-contained.mjs # Repository-boundary and skill metadata check
@@ -58,7 +58,7 @@ The baseline mirrors the scalable first-level split used by larger DSH plugins w
 - `tests/harness.ts` owns the shared real-Cordis test mount;
 - cohesive production behavior grows under capability-named `src/<feature>/` directories;
 - stable product-visible expected output belongs under `tests/snapshots/`;
-- exact-version pnpm dependency patches belong under `patches/` and are declared in `pnpm-workspace.yaml`.
+- dependency and DSH-host patches belong under `patches/`: pnpm `patchedDependencies` for exact registry versions, self-contained diffs against the DSH host when the plugin needs host source changes.
 
 Directories such as Turtle UI's chat, components, and extension areas describe that product, not the DSH plugin contract. Create equivalent feature directories only when the new plugin owns those capabilities. See `src/README.md`, `tests/README.md`, `tests/snapshots/README.md`, and `patches/README.md` for the local rules.
 

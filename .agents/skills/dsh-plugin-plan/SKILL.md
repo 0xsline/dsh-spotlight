@@ -48,7 +48,7 @@ Plan fail-loud behavior for self-contained misconfiguration at plugin load, and 
 
 ## Choose the repository structure
 
-Keep the baseline boundaries `src/index.ts`, `src/config.ts`, `src/runtime.ts`, `tests/harness.ts`, and `tests/plugin.spec.ts` focused. Record whether complexity justifies a capability-named `src/<feature>/` directory, additional shared harness support, visible fixtures under `tests/snapshots/`, or exact-version dependency patches under `patches/`. Do not pre-create directories copied from another plugin's product domains.
+Keep the baseline boundaries `src/index.ts`, `src/config.ts`, `src/runtime.ts`, `tests/harness.ts`, and `tests/plugin.spec.ts` focused. Record whether complexity justifies a capability-named `src/<feature>/` directory, additional shared harness support, visible fixtures under `tests/snapshots/`, or dependency or DSH-host patches under `patches/`. Do not pre-create directories copied from another plugin's product domains.
 
 ## Define ownership and lifecycle
 
