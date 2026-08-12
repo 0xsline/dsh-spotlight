@@ -1,5 +1,7 @@
 # DeepSeek Harness Plugin Template
 
+English | [中文](README.zh.md)
+
 A self-contained standalone repository template for an ESM Cordis plugin. Every source file, compiler setting, test fixture, contributor instruction, skill, and build helper used by the repository is inside this directory; every development input resolves below this repository root.
 
 Normal npm dependencies are resolved from the package registry. A DSH host is a runtime consumer of the finished package, not a source or build input.
@@ -16,6 +18,8 @@ Normal npm dependencies are resolved from the package registry. A DSH host is a 
 ├── patches/
 │   └── README.md                 # Dependency and DSH-host patch contract
 ├── scripts/
+│   ├── extract-patch.mjs         # Config-driven host patch regeneration (see patches/README.md)
+│   ├── patch.sh                  # Idempotent host patch application
 │   ├── prepare.mjs               # Self-contained declaration and runtime prepare build
 │   └── verify-self-contained.mjs # Repository-boundary and skill metadata check
 ├── src/

@@ -22,14 +22,48 @@ Keep the patch version exact, document why the patch is required, and remove it 
 
 When the plugin's behavior requires changing the DSH host itself — launcher or bootstrap wiring, build seams, or any source a `cordis.patch.yml` cannot express — carry the host-side diff here instead of shipping a modified host. `cordis.patch.yml` composes plugin rows only; it cannot edit host source, compiler settings, build scripts, catalogs, or boot code.
 
-When porting an existing repository, the host patch is the complete diff between the ported repository and the baseline host repository, restricted to everything outside the shipped packages: every non-package change belongs in it, never a partial selection. A host-side change that is not in the host patch is a dropped change, not an omission.
+The host patch carries only what the official plugin registration system cannot provide. Three rules:
+
+- **keep actual code**: host code that must run or change for the plugin to work and that no official channel can express — launcher calls that must happen before any target module import, host build seams (for example a source-transform option in the client bundle preset, which `dsh.client` has no field for), catalog entries compiled into an official package, and host-side tests proving those seams;
+- **drop documentation**: README, docs, and agent-note changes do not affect host behavior;
+- **drop what the official registration system handles**: installing packages (bundle specs), roster rows and bundle dependencies (a bundle declares its own rows in its own `cordis.patch.yml`), catalog generation over the workspace, invariant/gate exemptions that only exist because a package lives inside the host workspace, and install-side artifacts such as `pnpm-lock.yaml` and third-party notices.
+
+When porting an existing repository, start from the complete diff between the ported repository and the baseline host repository, restricted to everything outside the shipped packages, then cut it down to these three rules. A seam the plugin needs that is not in the host patch is a dropped change; a registry-handled or doc-only change that is in the host patch is scope creep. If the seam requires a static import of the plugin packages, note that it resolves only on source hosts (the installed-bundle host cannot resolve it until the official host contains the wiring).
 
 Store each host patch as one self-contained diff with a documented pinned host snapshot, the apply command, and the regeneration command:
 
 ```sh
 git apply patches/<name>-host.patch    # from a DSH checkout at the pinned snapshot
-git -C <deepseek-harness> diff <snapshot-a> <snapshot-b> -- <host files> \
-  > patches/<name>-host.patch
 ```
+
+The repository scripts mechanize extraction and application; both read `patches/host-patch.config.json` when present:
+
+```sh
+pnpm run extract:patch -- --harness <fork-checkout>   # regenerate the patch
+pnpm run patch:host -- <deepseek-harness-checkout>         # apply the patch
+```
+
+Config schema:
+
+```json
+{
+  "name": "fabric-host-integration",
+  "baseline": "4ee4ae88...",
+  "upstream": "0e1065d4",
+  "out": "patches/fabric-host-integration.patch",
+  "exclude": ["packages/self-modification/cordis-fabric", "README.md", "docs"],
+  "revert": ["packages/bundle/web-app/cordis.patch.yml", "pnpm-lock.yaml"],
+  "seams": [
+    { "file": ".gitignore", "old": "node_modules/\nlib/", "new": "node_modules/\n!apps/cli/tests/fixtures/node_modules/\nlib/" }
+  ]
+}
+```
+
+- `baseline` / `upstream` / `out` — pinned host snapshot, the upstream commit carrying the wiring, and the patch output path (CLI flags override);
+- `exclude` — pathspec excludes never allowed into the patch (shipped packages, documentation);
+- `revert` — files reverted wholesale to the baseline (registry-handled or workspace-integration changes);
+- `seams` — partial keeps: exact `{ file, old, new }` replacements applied after the revert; the extractor fails loud when an anchor has drifted upstream.
+
+The extractor verifies the result (forward apply on a baseline worktree, reverse apply on the trimmed worktree) and the applier is idempotent (a tree that already contains the wiring is detected and skipped). The bundle itself installs through the official plugin channel (`dsh plugin --profile <p> add <spec>`); `scripts/patch.sh` only applies the host seams.
 
 Record in this README which host files the patch touches, why the plugin needs them, and the snapshot it applies to. A host patch is a repository-level artifact for host maintainers: it is not part of the published package, is never declared in `pnpm-workspace.yaml`, and is removed when the host contains the change.

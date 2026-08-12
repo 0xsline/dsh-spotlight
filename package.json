@@ -13,7 +13,9 @@
     "test": "vitest run",
     "typecheck": "tsc -b --pretty false && tsc -p tsconfig.vitest.json --pretty false",
     "verify:self-contained": "node scripts/verify-self-contained.mjs",
-    "prepare": "node scripts/prepare.mjs"
+    "prepare": "node scripts/prepare.mjs",
+    "extract:patch": "node scripts/extract-patch.mjs",
+    "patch:host": "bash scripts/patch.sh"
   },
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
