@@ -25,7 +25,7 @@ plugin settings—without leaving the keyboard.
 Install the bundle into your DSH Web profile:
 
 ```sh
-dsh plugin --profile web add "github:dsh-external/dsh-spotlight#main"
+dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 dsh web
 ```
 
@@ -63,7 +63,7 @@ updating the selectors in `src/spotlight/discovery.ts`.
 Requirements: Node.js `^22.19.0 || >=24.0.0` and pnpm `11.7.0`.
 
 ```sh
-git clone https://github.com/dsh-external/dsh-spotlight.git
+git clone https://github.com/0xsline/dsh-spotlight.git
 cd dsh-spotlight
 pnpm install
 

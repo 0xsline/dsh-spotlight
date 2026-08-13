@@ -19,7 +19,7 @@ Slash Command、最近会话、当前界面操作和已安装插件的设置入�
 将 Bundle 安装到 DSH Web Profile：
 
 ```sh
-dsh plugin --profile web add "github:dsh-external/dsh-spotlight#main"
+dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 dsh web
 ```
 
@@ -56,7 +56,7 @@ cordis.patch.yml         DSH Web Profile 组合配置
 环境要求：Node.js `^22.19.0 || >=24.0.0`、pnpm `11.7.0`。
 
 ```sh
-git clone https://github.com/dsh-external/dsh-spotlight.git
+git clone https://github.com/0xsline/dsh-spotlight.git
 cd dsh-spotlight
 pnpm install
 
