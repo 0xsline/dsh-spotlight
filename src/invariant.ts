@@ -1,11 +1,11 @@
 /**
- * Package-owned invariant companion for `@your-scope/dsh-plugin-template`.
- * @module @your-scope/dsh-plugin-template/invariant
+ * Package-owned invariant companion for `@dsh-external/dsh-spotlight`.
+ * @module @dsh-external/dsh-spotlight/invariant
  */
 
 import type { Context } from 'cordis'
 
-const PACKAGE_NAME = '@your-scope/dsh-plugin-template'
+const PACKAGE_NAME = '@dsh-external/dsh-spotlight'
 
 /** A package-attributed invariant failure reported by the host registry. */
 type InvariantFailure = (message: string) => never
@@ -19,13 +19,13 @@ interface InvariantRegistry {
 }
 
 /** Cordis companion plugin name. */
-export const name = 'plugin-template-invariant'
+export const name = 'dsh-spotlight-invariant'
 /** Service required before the companion can reserve package ownership. */
 export const inject = ['invariants']
 
 /**
- * No runtime invariant: the template logs at activation and owns no event
- * sequence or mutable data relation. Replace this when the real plugin does.
+ * No runtime invariant: the server half owns no event sequence or mutable
+ * data relation; browser contribution disposal is verified by client tests.
  */
 const install: InvariantInstaller = () => {}
 

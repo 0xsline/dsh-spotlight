@@ -1,6 +1,6 @@
 {
-  "name": "@your-scope/dsh-plugin-template",
-  "description": "Standalone Cordis plugin template for DeepSeek Harness",
+  "name": "@dsh-external/dsh-spotlight",
+  "description": "Keyboard-first command palette for DeepSeek Harness Web",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -24,6 +24,10 @@
       "types": "./lib/types/index.d.ts",
       "default": "./lib/index.js"
     },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
     "./invariant": {
       "types": "./lib/types/invariant.d.ts",
       "default": "./lib/invariant.js"
@@ -34,6 +38,7 @@
   "files": [
     "lib/index.js",
     "lib/invariant.js",
+    "lib/client.js",
     "lib/types/**/*.d.ts",
     "lib/types/**/*.d.ts.map",
     "src",
@@ -57,6 +62,12 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime"
+      ]
     }
   }
 }

@@ -3,12 +3,5 @@
 # must match package.json.
 
 - insert:
-    - id: plugin-template
-      name: '@your-scope/dsh-plugin-template'
-      config:
-        message: DSH plugin template loaded
-
-    # Every DSH package owns an invariant companion. Keep this row when the
-    # selected base profile provides the `invariants` service.
-    - id: plugin-template-invariant
-      name: '@your-scope/dsh-plugin-template/invariant'
+    - id: dsh-spotlight
+      name: '@dsh-external/dsh-spotlight'

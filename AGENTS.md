@@ -1,6 +1,6 @@
-# Plugin Template Contributor Notes
+# DSH Spotlight Contributor Notes
 
-This repository is a standalone DeepSeek Harness plugin template.
+This repository contains the standalone DSH Spotlight Web plugin.
 
 - Preserve the function-plugin named exports: `name`, `inject`, `Config`, and `apply`; do not add a default export.
 - Keep Loader metadata in `src/index.ts`, schema/defaults in `src/config.ts`, and host boundaries plus activation in `src/runtime.ts`.
