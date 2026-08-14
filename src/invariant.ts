@@ -1,11 +1,11 @@
 /**
- * Package-owned invariant companion for `@dsh-external/dsh-spotlight`.
- * @module @dsh-external/dsh-spotlight/invariant
+ * Package-owned invariant companion for `@0xsline/dsh-spotlight`.
+ * @module @0xsline/dsh-spotlight/invariant
  */
 
 import type { Context } from 'cordis'
 
-const PACKAGE_NAME = '@dsh-external/dsh-spotlight'
+const PACKAGE_NAME = '@0xsline/dsh-spotlight'
 
 /** A package-attributed invariant failure reported by the host registry. */
 type InvariantFailure = (message: string) => never

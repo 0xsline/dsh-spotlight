@@ -1,6 +1,6 @@
 /**
  * Serializable configuration, schema, and direct-call defaults.
- * @module @dsh-external/dsh-spotlight/config
+ * @module @0xsline/dsh-spotlight/config
  */
 
 import z from 'schemastery'

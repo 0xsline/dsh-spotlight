@@ -1,6 +1,6 @@
 /**
  * Runtime boundary and Cordis activation for the plugin.
- * @module @dsh-external/dsh-spotlight/runtime
+ * @module @0xsline/dsh-spotlight/runtime
  */
 
 import type { Context } from 'cordis'

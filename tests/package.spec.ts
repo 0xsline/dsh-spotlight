@@ -10,7 +10,7 @@ const manifest = JSON.parse(readFileSync(new URL('package.json', root), 'utf8'))
 
 describe('package composition', () => {
   it('declares the Web client and official bundle patch', () => {
-    expect(manifest.name).toBe('@dsh-external/dsh-spotlight')
+    expect(manifest.name).toBe('@0xsline/dsh-spotlight')
     expect(manifest.exports['./client']).toBeDefined()
     expect(manifest.dsh.bundle.patch).toBe('./cordis.patch.yml')
     expect(manifest.dsh.client).toEqual({
@@ -21,7 +21,7 @@ describe('package composition', () => {
 
   it('composes only package-owned rows', () => {
     const patch = readFileSync(new URL('cordis.patch.yml', root), 'utf8')
-    expect(patch).toContain("id: dsh-spotlight\n      name: '@dsh-external/dsh-spotlight'")
+    expect(patch).toContain("id: dsh-spotlight\n      name: '@0xsline/dsh-spotlight'")
     expect(patch).not.toContain('dsh-spotlight-invariant')
   })
 })

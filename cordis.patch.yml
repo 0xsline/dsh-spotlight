@@ -4,4 +4,4 @@
 
 - insert:
     - id: dsh-spotlight
-      name: '@dsh-external/dsh-spotlight'
+      name: '@0xsline/dsh-spotlight'

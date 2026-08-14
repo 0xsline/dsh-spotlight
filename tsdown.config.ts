@@ -13,7 +13,7 @@ export default [
     clean: false,
   },
   {
-    name: '@dsh-external/dsh-spotlight/client',
+    name: '@0xsline/dsh-spotlight/client',
     entry: { client: 'lib/types/client/index.js' },
     outDir: 'lib',
     format: ['cjs'],
@@ -24,7 +24,7 @@ export default [
     clean: false,
     outputOptions: {
       entryFileNames: 'client.js',
-      banner: 'window.__ModuleLoader__.load({ id: "@dsh-external/dsh-spotlight", factory: (require) => {',
+      banner: 'window.__ModuleLoader__.load({ id: "@0xsline/dsh-spotlight", factory: (require) => {',
       footer: 'return module.exports; } });',
       intro: 'var module = { exports: {} }; var exports = module.exports;',
     },

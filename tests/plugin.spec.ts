@@ -5,7 +5,7 @@ import * as plugin from '../src/index.ts'
 import * as invariant from '../src/invariant.ts'
 import { createPluginHarness } from './harness.ts'
 
-describe('@dsh-external/dsh-spotlight', () => {
+describe('@0xsline/dsh-spotlight', () => {
   it('preserves the function-plugin namespace through Loader unwrapping', () => {
     expect('default' in plugin).toBe(false)
 
@@ -31,7 +31,7 @@ describe('@dsh-external/dsh-spotlight', () => {
 
     const fiber = await ctx.plugin(invariant)
     expect(register).toHaveBeenCalledTimes(1)
-    expect(register.mock.calls[0]?.[0]).toBe('@dsh-external/dsh-spotlight')
+    expect(register.mock.calls[0]?.[0]).toBe('@0xsline/dsh-spotlight')
     expect(typeof register.mock.calls[0]?.[1]).toBe('function')
 
     await fiber.dispose()

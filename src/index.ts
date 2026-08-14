@@ -1,6 +1,6 @@
 /**
  * Standalone function plugin for DeepSeek Harness.
- * @module @dsh-external/dsh-spotlight
+ * @module @0xsline/dsh-spotlight
  */
 
 /** Cordis plugin name; keep this stable after publishing. */
