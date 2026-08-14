@@ -180,7 +180,7 @@ function interfaceActions(document: Document): SpotlightAction[] {
 
 /** Recent sessions straight from the host sessions service, newest order preserved. */
 function sessionActions(host: SpotlightHost): SpotlightAction[] {
-  const snapshot = host.sessions.getSnapshot()
+  const snapshot = host.sessions.list.getSnapshot()
   return snapshot.ids.flatMap(id => {
     const session: SpotlightSessionSummary | undefined = snapshot.byId[id]
     if (session === undefined || session.blank === true) return []
@@ -208,7 +208,7 @@ async function runSlashCommand(
   name: string,
 ): Promise<void> {
   const commands = host.commands
-  const sessionId = host.sessions.getSnapshot().current
+  const sessionId = host.sessions.list.getSnapshot().current
   if (commands === undefined || sessionId === undefined || descriptor.input !== undefined) {
     insertCommand(document, `/${name} `)
     return
@@ -228,7 +228,7 @@ async function runSlashCommand(
 function commandActions(host: SpotlightHost, document: Document): Promise<SpotlightAction[]> {
   const commands = host.commands
   if (commands === undefined) return Promise.resolve([])
-  const sessionId = host.sessions.getSnapshot().current
+  const sessionId = host.sessions.list.getSnapshot().current
   if (sessionId === undefined) return Promise.resolve([])
   return commands.list(sessionId).then(result => {
     if (!result.ok) return []
@@ -274,12 +274,12 @@ function pluginActions(host: SpotlightHost, document: Document): Promise<Spotlig
   }, () => [] as SpotlightAction[])
 }
 
-/** Discover immediately available actions: built-ins, interface elements, and sessions. */
+/** Discover immediately available actions: built-ins, sessions, and interface elements. */
 export function discoverVisibleActions(host: SpotlightHost, document: Document): SpotlightAction[] {
   return unique([
     ...builtInActions(document),
-    ...interfaceActions(document),
     ...sessionActions(host),
+    ...interfaceActions(document),
   ])
 }
 

@@ -4,7 +4,7 @@ import {
   defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
   type SpotlightShortcut,
 } from './keyboard.ts'
-import { searchCandidates } from './search.ts'
+import { capPerKind, searchCandidates } from './search.ts'
 
 const STYLE_ID = 'dsh-spotlight-style'
 const ROOT_ATTRIBUTE = 'data-dsh-spotlight-root'
@@ -149,7 +149,12 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
     body.appendChild(overlay)
     root = overlay
 
-    let actions: SpotlightAction[] = discoverVisibleActions(host, document)
+    let actions: SpotlightAction[] = []
+    try {
+      actions = discoverVisibleActions(host, document)
+    } catch (error) {
+      console.warn('[dsh-spotlight] visible discovery failed', error)
+    }
     let matches = searchCandidates(actions, '')
     let active = matches.length > 0 ? 0 : -1
 
@@ -194,7 +199,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
     }
 
     const render = (): void => {
-      matches = searchCandidates(actions, input.value)
+      matches = capPerKind(searchCandidates(actions, input.value, 200), 6)
       if (active >= matches.length) active = matches.length - 1
       if (active < 0 && matches.length > 0) active = 0
       results.textContent = ''
@@ -211,7 +216,6 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
           option.id = `dsh-spotlight-option-${index}`
           option.setAttribute('data-dsh-spotlight-option', '')
           option.setAttribute('role', 'option')
-          option.setAttribute('aria-selected', String(index === active))
           const copy = document.createElement('span')
           const title = document.createElement('span')
           title.setAttribute('data-dsh-spotlight-title', '')
@@ -261,6 +265,8 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
       active = 0
       render()
       input.focus({ preventScroll: true })
+    }).catch(error => {
+      console.warn('[dsh-spotlight] async discovery failed', error)
     })
   }
 

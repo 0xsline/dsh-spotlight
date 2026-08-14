@@ -8,7 +8,7 @@ const SHORTCUT_STORAGE_KEY = 'dsh.spotlight.shortcut.v1'
 
 function fakeSessions(list: Partial<SpotlightSessionList> = {}): SpotlightSessions {
   const snapshot: SpotlightSessionList = { ids: [], byId: {}, current: undefined, ...list }
-  return { getSnapshot: () => snapshot, open: vi.fn() }
+  return { list: { getSnapshot: () => snapshot }, open: vi.fn() }
 }
 
 function hostWithSessions(): SpotlightHost {

@@ -2,12 +2,14 @@
  * DSH Web client contribution for `@0xsline/dsh-spotlight`. Loaded
  * through the official client channel: the host scans this package's
  * `dsh.client` declaration and mounts the bundle's named exports as a Cordis
- * plugin. The palette mounts once the host sessions service exists, and an
- * optional `/spotlight` slash command registers through the host command UI.
+ * plugin. The palette mounts once the host sessions, command-plane, and
+ * plugin-inventory services exist — all three are composition-critical in
+ * every stock DSH Web deployment, so hard injection cannot fail the boot
+ * beyond what the host UI itself already requires. An optional `/spotlight`
+ * slash command registers through the host command UI where it exists.
  *
  * Host services are read by name only (narrow local contracts in
- * `src/spotlight/host.ts`); missing optional services degrade the affected
- * categories instead of failing the web boot.
+ * `src/spotlight/host.ts`).
  * @module @0xsline/dsh-spotlight/client
  */
 
@@ -20,78 +22,46 @@ import type {
 /** Cordis plugin name. */
 export const name = 'dsh-spotlight-client'
 
-/** No hard dependencies: the mount attaches through scoped injection. */
-export const inject: string[] = []
-
-/** The `remote` service face carrying the command and plugin-inventory namespaces. */
-interface RemoteFacade {
-  commands?: SpotlightCommands
-  pluginInventory?: SpotlightPluginInventory
-}
-
-/** Assemble the host contract from named services; undefined without `sessions`. */
-function resolveHost(ctx: Context): SpotlightHost | undefined {
-  const sessions = ctx.get('sessions') as SpotlightSessions | undefined
-  if (sessions === undefined) return undefined
-  const remote = ctx.get('remote') as RemoteFacade | undefined
-  return {
-    sessions,
-    ...(remote?.commands !== undefined ? { commands: remote.commands } : {}),
-    ...(remote?.pluginInventory !== undefined ? { pluginInventory: remote.pluginInventory } : {}),
-  }
-}
-
+/**
+ * Services required before the palette mounts. All are provided by the stock
+ * DSH Web roster (runtime, api-remotes, ui-commands); the command and
+ * inventory Remotes carry inject-guarded descriptors, so the entry must
+ * declare them.
+ */
+export const inject = ['sessions', 'remote.commands', 'remote.pluginInventory', 'commandUi']
 /** The `/spotlight` contribution: a popupSelect entry that opens the palette. */
-function registerSpotlightCommand(scope: Context, open: () => void): (() => void) | undefined {
-  let commandDispose: (() => void) | undefined
-  let disposed = false
-  const dispose = (): void => {
-    if (disposed) return
-    disposed = true
-    commandDispose?.()
-    commandDispose = undefined
-  }
-  scope.inject(['commandUi'], (uiScope) => {
-    if (disposed) return
-    const commandUi = uiScope.get('commandUi') as SpotlightCommandUi | undefined
-    if (commandUi === undefined) return
-    commandDispose = commandUi.register({
-      name: 'spotlight',
-      description: '打开 Spotlight 命令面板 · Open the Spotlight palette',
-      available: () => true,
-      ui: {
-        kind: 'popupSelect',
-        options: async () => [
-          { id: 'open', label: '打开 Spotlight', detail: 'Open the Spotlight palette' },
-        ],
-        onSelect: () => { open() },
-      },
-    })
-    uiScope.effect(() => {
-      commandDispose?.()
-      commandDispose = undefined
-      return () => undefined
-    })
+function registerSpotlightCommand(commandUi: SpotlightCommandUi, open: () => void): () => void {
+  return commandUi.register({
+    name: 'spotlight',
+    description: '打开 Spotlight 命令面板 · Open the Spotlight palette',
+    available: () => true,
+    ui: {
+      kind: 'popupSelect',
+      options: async () => [
+        { id: 'open', label: '打开 Spotlight', detail: 'Open the Spotlight palette' },
+      ],
+      onSelect: () => { open() },
+    },
   })
-  return dispose
 }
 
 /**
- * Apply the client plugin: mount the palette in the sessions scope and expose
- * the `/spotlight` command where the host command UI exists.
+ * Apply the client plugin: mount the palette and register the `/spotlight`
+ * command where the host command UI exists.
  * @param ctx - client root context.
  */
 export function apply(ctx: Context): void {
-  ctx.inject(['sessions'], (scope) => {
-    scope.effect(() => {
-      const host = resolveHost(scope)
-      if (host === undefined) return () => undefined
-      const { dispose, open } = mountSpotlight(host, document, window)
-      const disposeCommand = registerSpotlightCommand(scope, open)
-      return () => {
-        disposeCommand?.()
-        dispose()
-      }
-    })
+  ctx.effect(() => {
+    const host: SpotlightHost = {
+      sessions: ctx.get('sessions') as SpotlightSessions,
+      commands: ctx.get('remote.commands') as SpotlightCommands,
+      pluginInventory: ctx.get('remote.pluginInventory') as SpotlightPluginInventory,
+    }
+    const { dispose, open } = mountSpotlight(host, document, window)
+    const disposeCommand = registerSpotlightCommand(ctx.get('commandUi') as SpotlightCommandUi, open)
+    return () => {
+      disposeCommand()
+      dispose()
+    }
   })
 }

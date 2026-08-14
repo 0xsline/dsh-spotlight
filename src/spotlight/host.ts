@@ -34,7 +34,7 @@ export interface SpotlightSessionList {
 
 /** Observable-snapshot + selection face the Spotlight uses (subset of the host's ISessions). */
 export interface SpotlightSessions {
-  getSnapshot(): SpotlightSessionList
+  list: { getSnapshot(): SpotlightSessionList }
   open(id: SpotlightSessionId): void
 }
 

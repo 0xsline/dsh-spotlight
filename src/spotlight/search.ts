@@ -60,6 +60,24 @@ export function scoreCandidate(candidate: SearchCandidate, query: string): numbe
   return score
 }
 
+/**
+ * Display cap over an already-ranked list: keep at most `perKind` candidates
+ * per kind in rank order. The underlying candidate set stays uncapped, so a
+ * query can still surface anything the cap hides in the initial view.
+ */
+export function capPerKind<T extends SearchCandidate>(
+  ranked: readonly RankedCandidate<T>[],
+  perKind: number,
+): RankedCandidate<T>[] {
+  const counts = new Map<T['kind'], number>()
+  return ranked.filter(({ item }) => {
+    const current = counts.get(item.kind) ?? 0
+    if (current >= perKind) return false
+    counts.set(item.kind, current + 1)
+    return true
+  })
+}
+
 /** Rank matching candidates while preserving discovery order for equal scores. */
 export function searchCandidates<T extends SearchCandidate>(
   candidates: readonly T[],

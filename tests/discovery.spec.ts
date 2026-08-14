@@ -8,7 +8,7 @@ import { installVisibleRects } from './dom.ts'
 
 function fakeSessions(list: Partial<SpotlightSessionList> = {}): SpotlightSessions {
   const snapshot: SpotlightSessionList = { ids: [], byId: {}, current: undefined, ...list }
-  return { getSnapshot: () => snapshot, open: vi.fn() }
+  return { list: { getSnapshot: () => snapshot }, open: vi.fn() }
 }
 
 beforeEach(() => {
