@@ -16,18 +16,23 @@ Slash Command、最近会话、当前界面操作和已安装插件的设置入�
 
 ## 安装
 
-将 Bundle 安装到 DSH Web Profile：
+将 Bundle 安装到 DSH Web Profile。通过 npm：
+
+```sh
+dsh plugin --profile web add "@0xsline/dsh-spotlight"
+```
+
+或通过 Git 源码：
 
 ```sh
 dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
-dsh web
 ```
 
-打开 `http://127.0.0.1:3080`，按 `⌘K` 或 `Ctrl+K` 即可使用。
+然后启动 DSH Web，按 `⌘K` 或 `Ctrl+K` 即可使用：
 
 ## 使用
 
-1. 使用全局快捷键打开 Spotlight。
+1. 使用全局快捷键打开 Spotlight，或在 DSH Web 输入框输入 `/spotlight` 从斜杠菜单打开。
 2. 输入关键词筛选命令和操作。
 3. 使用上下方向键与 Enter，或直接点击结果。
 4. 点击底部的「快捷键」并按下新组合键，即可修改快捷键。
@@ -37,18 +42,19 @@ dsh web
 
 ## 工作原理
 
-DSH Spotlight 是一个独立的 Cordis Bundle，附带轻量 Web Client。客户端从当前 DSH Web
-页面发现可执行元素，并把执行交还给原生界面；插件不新增服务端数据通道，也不保存持久化的
-服务端状态。
+DSH Spotlight 是一个独立的 Cordis Bundle，附带轻量 Web Client。当宿主服务存在时，
+客户端直接读取 DSH Web 自身的服务：最近会话、Slash Command 和插件清单；同时从当前
+页面发现可执行元素，并把执行交还给原生界面。缺失的可选服务只降级对应类别，不会导致
+Web 启动失败。插件不新增服务端数据通道，也不保存持久化的服务端状态。
 
 ```text
 src/index.ts             Loader 元数据
 src/client/index.ts      Web Client 激活与卸载
-src/spotlight/           动作发现、搜索、键盘处理和界面
+src/spotlight/           Host + DOM 发现、搜索、键盘处理和界面
 cordis.patch.yml         DSH Web Profile 组合配置
 ```
 
-动作发现依赖当前 DSH Web 的 DOM；宿主界面结构变化时，可能需要同步更新
+部分动作发现依赖当前 DSH Web 的 DOM；宿主界面结构变化时，可能需要同步更新
 `src/spotlight/discovery.ts` 中的选择器。
 
 ## 开发

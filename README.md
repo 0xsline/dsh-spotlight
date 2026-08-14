@@ -22,18 +22,24 @@ plugin settings—without leaving the keyboard.
 
 ## Install
 
-Install the bundle into your DSH Web profile:
+Install the bundle into your DSH Web profile. From npm:
+
+```sh
+dsh plugin --profile web add "@0xsline/dsh-spotlight"
+```
+
+Or from the Git source:
 
 ```sh
 dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
-dsh web
 ```
 
-Then open `http://127.0.0.1:3080` and press `⌘K` or `Ctrl+K`.
+Then start DSH Web and press `⌘K` or `Ctrl+K`:
 
 ## Usage
 
-1. Open Spotlight with the global shortcut.
+1. Open Spotlight with the global shortcut, or type `/spotlight` in the DSH
+   Web composer and pick the entry from the slash menu.
 2. Type to filter commands and actions.
 3. Use Arrow Up/Down and Enter, or click a result.
 4. Click **Shortcut** in the footer to record a different key combination.
@@ -43,20 +49,23 @@ Shortcut preferences are local to the current browser origin and profile.
 
 ## How it works
 
-DSH Spotlight is a standalone Cordis bundle with a small Web client. The client
-discovers actionable elements in the current DSH Web page and delegates
-execution back to those native elements. It adds no server data channel and
-stores no durable server-side state.
+DSH Spotlight is a standalone Cordis bundle with a small Web client. When the
+host services are present, the client reads recent sessions, slash commands,
+and the plugin inventory directly from DSH Web's own services; it also
+discovers actionable elements in the current page and delegates execution back
+to those native elements. Missing optional services degrade the affected
+categories instead of failing the web boot. The plugin adds no server data
+channel and stores no durable server-side state.
 
 ```text
 src/index.ts             Loader metadata
 src/client/index.ts      Web client activation and disposal
-src/spotlight/           Discovery, search, keyboard handling, and UI
+src/spotlight/           Host + DOM discovery, search, keyboard handling, and UI
 cordis.patch.yml         DSH Web profile composition
 ```
 
-Because discovery follows the current DSH Web DOM, host UI changes may require
-updating the selectors in `src/spotlight/discovery.ts`.
+Because part of the discovery follows the current DSH Web DOM, host UI
+changes may require updating the selectors in `src/spotlight/discovery.ts`.
 
 ## Development
 
