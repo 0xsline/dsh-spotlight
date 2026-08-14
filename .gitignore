@@ -4,3 +4,5 @@ node_modules/
 *.tgz
 coverage/
 .pnpm-store/
+.DS_Store
+*.log

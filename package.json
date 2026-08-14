@@ -44,7 +44,7 @@
     "src",
     "cordis.patch.yml"
   ],
-  "license": "BSD-3-Clause",
+  "license": "MIT",
   "peerDependencies": {
     "cordis": "^4.0.0-rc.7",
     "schemastery": "^3.18.0"
