@@ -1,4 +1,5 @@
 import { discoverActions, discoverVisibleActions, type SpotlightAction } from './discovery.ts'
+import type { SpotlightHost } from './host.ts'
 import {
   defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
   type SpotlightShortcut,
@@ -12,26 +13,27 @@ const KIND_LABEL: Record<SpotlightAction['kind'], string> = {
   action: '操作', command: '命令', session: '会话', plugin: '插件',
 }
 
+/** The palette consumes the host theme's alias tokens so it follows light/dark and brand overrides. */
 const CSS = `
 [data-dsh-spotlight-root] { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: start center; padding-top: min(14vh, 120px); background: rgba(8, 10, 16, .48); backdrop-filter: blur(6px); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-[data-dsh-spotlight-panel] { width: min(680px, calc(100vw - 28px)); max-height: min(620px, calc(100vh - 48px)); overflow: hidden; border: 1px solid var(--dsw-alias-border-1, rgba(255,255,255,.12)); border-radius: 18px; background: var(--dsw-alias-bg-1, #17191f); color: var(--dsw-alias-text-1, #f5f7fb); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
-[data-dsh-spotlight-search] { display: flex; align-items: center; gap: 12px; padding: 18px 18px 14px; border-bottom: 1px solid var(--dsw-alias-border-1, rgba(255,255,255,.1)); }
-[data-dsh-spotlight-search] svg { width: 20px; height: 20px; flex: none; color: var(--dsw-alias-text-3, #949aa8); }
+[data-dsh-spotlight-panel] { width: min(680px, calc(100vw - 28px)); max-height: min(620px, calc(100vh - 48px)); overflow: hidden; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 18px; background: var(--dsw-alias-bg-overlay, #17191f); color: var(--dsw-alias-label-primary, #f5f7fb); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
+[data-dsh-spotlight-search] { display: flex; align-items: center; gap: 12px; padding: 18px 18px 14px; border-bottom: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.1)); }
+[data-dsh-spotlight-search] svg { width: 20px; height: 20px; flex: none; color: var(--dsw-alias-label-secondary, #949aa8); }
 [data-dsh-spotlight-input] { width: 100%; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; line-height: 1.5; }
-[data-dsh-spotlight-input]::placeholder { color: var(--dsw-alias-text-3, #8f96a3); }
+[data-dsh-spotlight-input]::placeholder { color: var(--dsw-alias-label-secondary, #8f96a3); }
 [data-dsh-spotlight-results] { max-height: min(470px, calc(100vh - 190px)); overflow: auto; padding: 8px; }
 [data-dsh-spotlight-option] { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 12px; border: 0; border-radius: 11px; background: transparent; color: inherit; text-align: left; cursor: pointer; }
-[data-dsh-spotlight-option][aria-selected="true"], [data-dsh-spotlight-option]:hover { background: var(--dsw-alias-interactive-bg-hover, rgba(91, 141, 239, .16)); }
+[data-dsh-spotlight-option][aria-selected="true"], [data-dsh-spotlight-option]:hover { background: color-mix(in srgb, var(--dsw-alias-brand-primary, #4d6bfe) 16%, transparent); }
 [data-dsh-spotlight-title] { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 620; }
-[data-dsh-spotlight-detail] { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-text-3, #969dab); font-size: 12px; }
-[data-dsh-spotlight-kind] { padding: 3px 7px; border: 1px solid var(--dsw-alias-border-1, rgba(255,255,255,.12)); border-radius: 999px; color: var(--dsw-alias-text-3, #a1a7b3); font-size: 11px; }
-[data-dsh-spotlight-empty] { padding: 42px 18px; color: var(--dsw-alias-text-3, #969dab); text-align: center; font-size: 13px; }
-[data-dsh-spotlight-footer] { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px 12px; border-top: 1px solid var(--dsw-alias-border-1, rgba(255,255,255,.08)); color: var(--dsw-alias-text-3, #8f96a3); font-size: 11px; }
-[data-dsh-spotlight-footer] kbd { padding: 2px 5px; border: 1px solid var(--dsw-alias-border-1, rgba(255,255,255,.14)); border-radius: 5px; background: rgba(255,255,255,.04); font: inherit; }
+[data-dsh-spotlight-detail] { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary, #969dab); font-size: 12px; }
+[data-dsh-spotlight-kind] { padding: 3px 7px; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 999px; color: var(--dsw-alias-label-secondary, #a1a7b3); font-size: 11px; }
+[data-dsh-spotlight-empty] { padding: 42px 18px; color: var(--dsw-alias-label-secondary, #969dab); text-align: center; font-size: 13px; }
+[data-dsh-spotlight-footer] { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px 12px; border-top: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.08)); color: var(--dsw-alias-label-secondary, #8f96a3); font-size: 11px; }
+[data-dsh-spotlight-footer] kbd { padding: 2px 5px; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.14)); border-radius: 5px; background: rgba(255,255,255,.04); font: inherit; }
 [data-dsh-spotlight-footer-controls] { display: flex; align-items: center; gap: 10px; }
 [data-dsh-spotlight-shortcut], [data-dsh-spotlight-shortcut-reset] { border: 0; padding: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-[data-dsh-spotlight-shortcut]:hover, [data-dsh-spotlight-shortcut-reset]:hover { color: var(--dsw-alias-text-1, #f5f7fb); }
-[data-dsh-spotlight-shortcut][data-recording="true"] { color: var(--dsw-alias-text-1, #f5f7fb); }
+[data-dsh-spotlight-shortcut]:hover, [data-dsh-spotlight-shortcut-reset]:hover { color: var(--dsw-alias-label-primary, #f5f7fb); }
+[data-dsh-spotlight-shortcut][data-recording="true"] { color: var(--dsw-alias-label-primary, #f5f7fb); }
 @media (prefers-reduced-motion: no-preference) { [data-dsh-spotlight-panel] { animation: dsh-spotlight-in .12s ease-out; } @keyframes dsh-spotlight-in { from { opacity: 0; transform: translateY(-8px) scale(.985); } } }
 `
 
@@ -49,10 +51,13 @@ function icon(document: Document): SVGElement {
   return svg
 }
 
-/** Mount the browser contribution and return its complete disposer. */
-export function mountSpotlight(document: Document, window: Window): () => void {
+/** Mount the browser contribution and return its disposer plus a programmatic opener. */
+export function mountSpotlight(host: SpotlightHost, document: Document, window: Window): {
+  dispose(): void
+  open(): void
+} {
   const body = document.body
-  if (body === null) return () => undefined
+  if (body === null) return { dispose: () => undefined, open: () => undefined }
 
   let ownsStyle = false
   if (document.getElementById(STYLE_ID) === null) {
@@ -144,7 +149,7 @@ export function mountSpotlight(document: Document, window: Window): () => void {
     body.appendChild(overlay)
     root = overlay
 
-    let actions: SpotlightAction[] = discoverVisibleActions(document)
+    let actions: SpotlightAction[] = discoverVisibleActions(host, document)
     let matches = searchCandidates(actions, '')
     let active = matches.length > 0 ? 0 : -1
 
@@ -250,7 +255,7 @@ export function mountSpotlight(document: Document, window: Window): () => void {
     render()
     renderShortcut()
     input.focus({ preventScroll: true })
-    void discoverActions(document).then(discovered => {
+    void discoverActions(host, document).then(discovered => {
       if (root !== overlay) return
       actions = discovered
       active = 0
@@ -268,9 +273,11 @@ export function mountSpotlight(document: Document, window: Window): () => void {
   }
   window.addEventListener('keydown', onGlobalKeydown, true)
 
-  return () => {
+  const dispose = (): void => {
     window.removeEventListener('keydown', onGlobalKeydown, true)
     close()
     if (ownsStyle) document.getElementById(STYLE_ID)?.remove()
   }
+
+  return { dispose, open }
 }

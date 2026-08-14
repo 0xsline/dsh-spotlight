@@ -1,15 +1,20 @@
 import type { SearchCandidate } from './search.ts'
+import type {
+  SpotlightCommandDescriptor, SpotlightHost, SpotlightPluginEntry, SpotlightSessionSummary,
+} from './host.ts'
 
-/** A searchable operation backed by the current DSH Web document. */
+/** A searchable operation backed by a DSH Web host service or the current page. */
 export interface SpotlightAction extends SearchCandidate {
   run(): void
 }
 
 const ACTIONABLE_SELECTOR = 'a[href], button, [role="button"], [role="menuitem"], [role="option"], [role="tab"]'
 const SPOTLIGHT_ROOT_SELECTOR = '[data-dsh-spotlight-root]'
-const COMMAND_LABEL = new RegExp('^(?:commands?|命令)$', 'i')
 const SETTINGS_LABEL = new RegExp('^(?:settings?|设置)$', 'i')
 const PLUGINS_LABEL = new RegExp('^(?:plugins?|插件)$', 'i')
+const NEW_CHAT_LABEL = new RegExp('^(?:new (?:chat|session|conversation)|新建(?:会话|对话|聊天))$', 'i')
+/** Host command names are lowercase ASCII with letters, digits, `_` or `-`. */
+const COMMAND_NAME = new RegExp('^[a-z0-9_-]{1,80}$')
 
 function belongsToSpotlight(element: HTMLElement): boolean {
   return element.closest(SPOTLIGHT_ROOT_SELECTOR) !== null
@@ -39,39 +44,7 @@ function composerOf(document: Document): HTMLElement | undefined {
     .find(element => element.getAttribute('aria-hidden') !== 'true')
 }
 
-function commandButtonOf(document: Document): HTMLElement | undefined {
-  return actionable(document).find(element =>
-    element.getAttribute('aria-haspopup') === 'listbox'
-    && COMMAND_LABEL.test(labelOf(element)))
-}
-
-function nativeCommandOptions(document: Document): HTMLElement[] {
-  return [...document.querySelectorAll<HTMLElement>('[role="option"]')]
-    .filter(element => !belongsToSpotlight(element))
-}
-
-function waitForCommandOptions(document: Document): Promise<HTMLElement[]> {
-  const existing = nativeCommandOptions(document)
-  if (existing.length > 0) return Promise.resolve(existing)
-  const window = document.defaultView
-  if (window === null) return Promise.resolve([])
-  return new Promise(resolve => {
-    let timer = 0
-    const observer = new window.MutationObserver(() => {
-      const options = nativeCommandOptions(document)
-      if (options.length === 0) return
-      observer.disconnect()
-      window.clearTimeout(timer)
-      resolve(options)
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-    timer = window.setTimeout(() => {
-      observer.disconnect()
-      resolve([])
-    }, 1000)
-  })
-}
-
+/** Insert a command line into the composer so the native slash pipeline owns the rest. */
 function insertCommand(document: Document, command: string): void {
   const composer = composerOf(document)
   if (composer === undefined) return
@@ -104,6 +77,43 @@ function unique(actions: SpotlightAction[]): SpotlightAction[] {
   })
 }
 
+/** Wait for an actionable element matching the predicate, without a fixed sleep. */
+function waitForActionable(
+  document: Document,
+  predicate: (element: HTMLElement) => boolean,
+  timeoutMs: number,
+): Promise<HTMLElement | undefined> {
+  const existing = actionable(document).find(predicate)
+  if (existing !== undefined) return Promise.resolve(existing)
+  const window = document.defaultView
+  if (window === null) return Promise.resolve(undefined)
+  return new Promise(resolve => {
+    let timer = 0
+    const observer = new window.MutationObserver(() => {
+      const found = actionable(document).find(predicate)
+      if (found === undefined) return
+      observer.disconnect()
+      window.clearTimeout(timer)
+      resolve(found)
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+    timer = window.setTimeout(() => {
+      observer.disconnect()
+      resolve(undefined)
+    }, timeoutMs)
+  })
+}
+
+/** Open the Web settings surface and switch to the installed-plugins section. */
+export async function openPluginSettings(document: Document): Promise<void> {
+  const settings = firstAction(document, SETTINGS_LABEL)
+  if (settings === undefined) return
+  settings.click()
+  const plugins = await waitForActionable(document, element => PLUGINS_LABEL.test(labelOf(element)), 2000)
+  plugins?.click()
+}
+
+/** Immediately available operations read from the current page structure. */
 function builtInActions(document: Document): SpotlightAction[] {
   const actions: SpotlightAction[] = []
   const composer = composerOf(document)
@@ -115,7 +125,7 @@ function builtInActions(document: Document): SpotlightAction[] {
     })
   }
 
-  const newChat = firstAction(document, /(?:new (?:chat|session|conversation)|新建(?:会话|对话|聊天))/i)
+  const newChat = firstAction(document, NEW_CHAT_LABEL)
   if (newChat !== undefined) {
     actions.push({
       id: 'new-chat', kind: 'action', title: '新建会话', detail: 'New conversation',
@@ -126,17 +136,9 @@ function builtInActions(document: Document): SpotlightAction[] {
   const settings = firstAction(document, SETTINGS_LABEL)
   if (settings !== undefined) {
     actions.push({
-      id: 'open-plugins', kind: 'action', title: '打开插件设置', detail: 'Open installed plugins',
+      id: 'open-plugins', kind: 'action', title: '打开插件设置', detail: 'Open installed plugin settings',
       keywords: ['settings', 'extensions', '插件'],
-      run: () => {
-        settings.click()
-        document.defaultView?.setTimeout(() => {
-          const dialog = document.querySelector<HTMLElement>('[role="dialog"]')
-          const plugins = [...dialog?.querySelectorAll<HTMLElement>('button, [role="tab"]') ?? []]
-            .find(element => PLUGINS_LABEL.test(labelOf(element)))
-          plugins?.click()
-        }, 200)
-      },
+      run: () => { void openPluginSettings(document) },
     })
   }
 
@@ -156,6 +158,7 @@ function builtInActions(document: Document): SpotlightAction[] {
   return actions
 }
 
+/** Interface operations: elements that carry an explicit label or are tabs. */
 function interfaceActions(document: Document): SpotlightAction[] {
   const excluded = new RegExp('^(?:new (?:chat|session|conversation)|新建(?:会话|对话|聊天)|send message|发送消息|close|关闭(?:详情)?|commands?|命令)$', 'i')
   return actionable(document).flatMap(element => {
@@ -175,111 +178,117 @@ function interfaceActions(document: Document): SpotlightAction[] {
   })
 }
 
-function slashCommands(document: Document, commandButton: HTMLElement, elements: Iterable<HTMLElement>): SpotlightAction[] {
-  const actions: SpotlightAction[] = []
-  for (const element of elements) {
-    if (belongsToSpotlight(element)) continue
-    const raw = (
-      element.getAttribute('data-command')
-      ?? element.getAttribute('data-slash-command')
-      ?? element.children.item(0)?.textContent
-      ?? ''
-    ).trim()
-    const commandName = raw.startsWith('/') ? raw : `/${raw}`
-    if (!/^\/[\p{L}\p{N}_:-]+$/u.test(commandName) || commandName.length > 80) continue
-    const detail = element.children.item(1)?.textContent?.trim() || 'Slash command'
-    actions.push({
-      id: commandName,
-      kind: 'command',
-      title: commandName,
-      detail,
-      keywords: [raw, detail],
-      run: () => {
-        const liveButton = commandButtonOf(document) ?? commandButton
-        if (liveButton.getAttribute('aria-expanded') !== 'true') liveButton.click()
-        void waitForCommandOptions(document).then(options => {
-          const option = options
-            .find(candidate => candidate.children.item(0)?.textContent?.trim() === commandName.slice(1))
-          if (option !== undefined) {
-            option.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: document.defaultView }))
-          }
-          else insertCommand(document, commandName)
-        })
-      },
-    })
-  }
-  return actions
-}
-
-async function hiddenSlashCommands(document: Document): Promise<SpotlightAction[]> {
-  const commandButton = commandButtonOf(document)
-  if (commandButton === undefined) return []
-  const wasOpen = commandButton.getAttribute('aria-expanded') === 'true'
-  if (!wasOpen) commandButton.click()
-  const options = await waitForCommandOptions(document)
-  const actions = slashCommands(document, commandButton, options)
-  const liveButton = commandButtonOf(document) ?? commandButton
-  if (!wasOpen && liveButton.getAttribute('aria-expanded') === 'true') {
-    liveButton.click()
-  }
-  return actions
-}
-
-function recentSessions(document: Document): SpotlightAction[] {
-  const actions: SpotlightAction[] = []
-  for (const element of document.querySelectorAll<HTMLElement>('[role="treeitem"][aria-selected], a[href], [data-session-id]')) {
-    if (belongsToSpotlight(element)) continue
-    const href = element.getAttribute('href') ?? ''
-    const treeSession = element.getAttribute('role') === 'treeitem' && element.hasAttribute('aria-selected')
-    const sessionId = (element.getAttribute('data-session-id') ?? href) || labelOf(element)
-    if (sessionId === '' || (!treeSession && !element.hasAttribute('data-session-id') && !/(?:session|chat|thread|task)/i.test(href))) continue
-    const parts = [...element.querySelectorAll<HTMLElement>('span')].map(labelOf).filter(Boolean)
-    const title = treeSession ? parts[0] ?? labelOf(element) : labelOf(element)
-    if (title === '') continue
-    actions.push({
-      id: sessionId,
+/** Recent sessions straight from the host sessions service, newest order preserved. */
+function sessionActions(host: SpotlightHost): SpotlightAction[] {
+  const snapshot = host.sessions.getSnapshot()
+  return snapshot.ids.flatMap(id => {
+    const session: SpotlightSessionSummary | undefined = snapshot.byId[id]
+    if (session === undefined || session.blank === true) return []
+    const detail = [
+      session.cwd,
+      session.agentPreset !== undefined ? `Preset: ${session.agentPreset}` : undefined,
+      session.running ? '运行中' : undefined,
+    ].filter((part): part is string => part !== undefined).join(' · ') || '最近会话 · Recent session'
+    return [{
+      id: `session:${session.id}`,
       kind: 'session',
-      title,
-      detail: parts.slice(1).join(' · ') || '最近会话 · Recent session',
-      keywords: [sessionId],
-      run: () => { element.click() },
-    })
-  }
-  return actions
+      title: session.displayTitle,
+      detail,
+      keywords: [session.id, session.cwd ?? ''],
+      run: () => { host.sessions.open(session.id) },
+    }]
+  })
 }
 
-function installedPlugins(document: Document): SpotlightAction[] {
-  const actions: SpotlightAction[] = []
-  for (const element of document.querySelectorAll<HTMLElement>('[data-plugin-id], a[href*="plugin"]')) {
-    if (belongsToSpotlight(element)) continue
-    const id = element.getAttribute('data-plugin-id') ?? element.getAttribute('href') ?? ''
-    const title = labelOf(element)
-    if (id === '' || title === '') continue
-    actions.push({
-      id,
-      kind: 'plugin',
-      title,
-      detail: '已安装插件 · Installed plugin',
-      keywords: [id, 'settings', '插件'],
-      run: () => { element.click() },
-    })
+/** Dispatch one bare host command; argued commands fall through to the composer claim path. */
+async function runSlashCommand(
+  host: SpotlightHost,
+  document: Document,
+  descriptor: SpotlightCommandDescriptor,
+  name: string,
+): Promise<void> {
+  const commands = host.commands
+  const sessionId = host.sessions.getSnapshot().current
+  if (commands === undefined || sessionId === undefined || descriptor.input !== undefined) {
+    insertCommand(document, `/${name} `)
+    return
   }
-  return actions
+  try {
+    const result = await commands.execute(sessionId, `/${name}`)
+    if (!result.ok || result.value === undefined) {
+      // Unknown or rejected: hand the line to the native slash pipeline.
+      insertCommand(document, `/${name} `)
+    }
+  } catch {
+    insertCommand(document, `/${name} `)
+  }
 }
 
-/** Discover immediately visible actions represented by the current Web UI. */
-export function discoverVisibleActions(document: Document): SpotlightAction[] {
+/** The host command catalog for the current session, exposed as palette commands. */
+function commandActions(host: SpotlightHost, document: Document): Promise<SpotlightAction[]> {
+  const commands = host.commands
+  if (commands === undefined) return Promise.resolve([])
+  const sessionId = host.sessions.getSnapshot().current
+  if (sessionId === undefined) return Promise.resolve([])
+  return commands.list(sessionId).then(result => {
+    if (!result.ok) return []
+    return result.value.flatMap(descriptor => {
+      const name = descriptor.name.trim()
+      if (!COMMAND_NAME.test(name)) return []
+      return [{
+        id: `command:${name}`,
+        kind: 'command',
+        title: `/${name}`,
+        detail: descriptor.description?.trim() || 'Slash command',
+        keywords: [name, descriptor.description ?? ''],
+        run: () => { void runSlashCommand(host, document, descriptor, name) },
+      }]
+    })
+  }, () => [] as SpotlightAction[])
+}
+
+/** Compact a module specifier into a display name. */
+function pluginDisplayName(moduleName: string): string {
+  const unscoped = moduleName.startsWith('@') ? moduleName.slice(moduleName.indexOf('/') + 1) : moduleName
+  return unscoped.replace(new RegExp('^(?:cordis-plugin-|dsh-(?:host-|client-)?)'), '') || moduleName
+}
+
+/** Installed plugins from the host inventory, each jumping to the Plugins settings section. */
+function pluginActions(host: SpotlightHost, document: Document): Promise<SpotlightAction[]> {
+  const inventory = host.pluginInventory
+  if (inventory === undefined) return Promise.resolve([])
+  return inventory.list().then(result => {
+    if (!result.ok) return []
+    return result.value.entries.flatMap((entry: SpotlightPluginEntry) => {
+      const title = pluginDisplayName(entry.moduleName)
+      if (title === '') return []
+      return [{
+        id: `plugin:${entry.entryId}`,
+        kind: 'plugin',
+        title,
+        detail: `${entry.entryId}${entry.enabled ? '' : ' · 已禁用'}`,
+        keywords: [entry.entryId, entry.moduleName, '插件', 'plugin'],
+        run: () => { void openPluginSettings(document) },
+      }]
+    })
+  }, () => [] as SpotlightAction[])
+}
+
+/** Discover immediately available actions: built-ins, interface elements, and sessions. */
+export function discoverVisibleActions(host: SpotlightHost, document: Document): SpotlightAction[] {
   return unique([
     ...builtInActions(document),
     ...interfaceActions(document),
-    ...recentSessions(document),
-    ...installedPlugins(document),
+    ...sessionActions(host),
   ])
 }
 
-/** Discover visible actions plus the host's lazily rendered Slash catalog. */
-export async function discoverActions(document: Document): Promise<SpotlightAction[]> {
-  const visible = discoverVisibleActions(document)
-  const commands = await hiddenSlashCommands(document)
-  return unique([...visible, ...commands])
+/** Discover the full action set: visible actions plus the host command and plugin catalogs. */
+export async function discoverActions(host: SpotlightHost, document: Document): Promise<SpotlightAction[]> {
+  const visible = discoverVisibleActions(host, document)
+  const [commands, plugins] = await Promise.all([
+    commandActions(host, document),
+    pluginActions(host, document),
+  ])
+  return unique([...visible, ...commands, ...plugins])
 }
