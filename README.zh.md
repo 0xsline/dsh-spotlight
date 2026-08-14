@@ -9,7 +9,8 @@ Slash Command、最近会话、当前界面操作和已安装插件的设置入�
 
 - **一个快捷键：** macOS 默认 `⌘K`，其他平台默认 `Ctrl+K`。
 - **自由设置：** 点击面板底部的快捷键按钮，再按下新的组合键；设置保存在当前浏览器。
-- **复用原生操作：** 自动发现并触发 DSH Web 已有操作，不维护第二套命令注册表。
+- **复用原生操作：** 自动发现并触发 DSH Web 已有操作，只向原生斜杠菜单贡献一条
+  `/spotlight` 命令，不维护第二套命令注册表。
 - **快速搜索：** 对 Slash Command、最近会话、界面操作和插件设置进行稳定的模糊匹配。
 - **全键盘操作：** 上下方向键选择、Enter 执行、Escape 关闭。
 - **干净卸载：** 插件卸载时移除事件监听、样式和 DOM 节点。
@@ -30,6 +31,10 @@ dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 
 然后启动 DSH Web，按 `⌘K` 或 `Ctrl+K` 即可使用：
 
+```sh
+dsh --profile web
+```
+
 ## 使用
 
 1. 使用全局快捷键打开 Spotlight，或在 DSH Web 输入框输入 `/spotlight` 从斜杠菜单打开。
@@ -42,10 +47,11 @@ dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 
 ## 工作原理
 
-DSH Spotlight 是一个独立的 Cordis Bundle，附带轻量 Web Client。当宿主服务存在时，
-客户端直接读取 DSH Web 自身的服务：最近会话、Slash Command 和插件清单；同时从当前
-页面发现可执行元素，并把执行交还给原生界面。缺失的可选服务只降级对应类别，不会导致
-Web 启动失败。插件不新增服务端数据通道，也不保存持久化的服务端状态。
+DSH Spotlight 是一个独立的 Cordis Bundle，附带轻量 Web Client。客户端在宿主的会话、
+命令平面、插件清单和命令 UI 服务就绪后挂载（这些服务是每个标准 DSH Web 部署的固定组成），
+然后直接从这些服务读取最近会话、Slash Command 和插件清单；同时从当前页面发现可执行元素，
+并把执行交还给原生界面。单个目录 RPC 失败只降级对应类别。插件不新增服务端数据通道，
+也不保存持久化的服务端状态。
 
 ```text
 src/index.ts             Loader 元数据
@@ -77,7 +83,7 @@ pnpm run build
 ```sh
 pnpm run prepare
 dsh plugin --profile web add "link:$(pwd)"
-dsh web
+dsh --profile web
 ```
 
 发布前检查包内容：

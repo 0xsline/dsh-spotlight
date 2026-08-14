@@ -12,7 +12,8 @@ plugin settings—without leaving the keyboard.
 - **Customizable:** click the shortcut control in the footer, then press a new
   key combination. The setting is stored in the current browser.
 - **Native actions:** discovers and triggers the actions already provided by
-  DSH Web instead of maintaining a second command registry.
+  DSH Web, and contributes one `/spotlight` command to the native slash menu
+  instead of maintaining a second command registry.
 - **Fast search:** deterministic fuzzy matching across slash commands, recent
   sessions, UI actions, and plugin settings.
 - **Keyboard navigation:** Arrow Up/Down to select, Enter to run, Escape to
@@ -36,6 +37,10 @@ dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 
 Then start DSH Web and press `⌘K` or `Ctrl+K`:
 
+```sh
+dsh --profile web
+```
+
 ## Usage
 
 1. Open Spotlight with the global shortcut, or type `/spotlight` in the DSH
@@ -49,13 +54,14 @@ Shortcut preferences are local to the current browser origin and profile.
 
 ## How it works
 
-DSH Spotlight is a standalone Cordis bundle with a small Web client. When the
-host services are present, the client reads recent sessions, slash commands,
-and the plugin inventory directly from DSH Web's own services; it also
-discovers actionable elements in the current page and delegates execution back
-to those native elements. Missing optional services degrade the affected
-categories instead of failing the web boot. The plugin adds no server data
-channel and stores no durable server-side state.
+DSH Spotlight is a standalone Cordis bundle with a small Web client. The
+client mounts once the host's sessions, command-plane, plugin-inventory, and
+command-UI services exist — all standard in every stock DSH Web deployment —
+then reads recent sessions, slash commands, and the plugin inventory directly
+from those services. It also discovers actionable elements in the current page
+and delegates execution back to those native elements. A catalog RPC failure
+degrades only its own category. The plugin adds no server data channel and
+stores no durable server-side state.
 
 ```text
 src/index.ts             Loader metadata
@@ -87,7 +93,7 @@ Test a local checkout in DSH Web:
 ```sh
 pnpm run prepare
 dsh plugin --profile web add "link:$(pwd)"
-dsh web
+dsh --profile web
 ```
 
 Inspect the package contents before publishing:
