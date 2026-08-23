@@ -3,7 +3,7 @@
  * @module @0xsline/dsh-spotlight/config
  */
 
-import z from 'schemastery'
+import z from '@deepseek-ai/schemastery'
 
 /** The MVP has no deployment-varying server configuration. */
 export interface Config {}
