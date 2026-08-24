@@ -54,6 +54,6 @@ The self-contained prepare build is:
 pnpm run prepare
 ```
 
-It emits declarations and runtime JavaScript using only this repository's installed dependencies. `pnpm pack --dry-run --json` runs lifecycle scripts; inspect its final file list and restore a development build afterward when the pack lifecycle cleans or replaces generated files.
+It emits declarations and runtime JavaScript using only this repository's installed dependencies. The lifecycle exists for Git-source installs because `lib/` is generated and ignored: it deletes and recreates only the project-root `lib/` directory, runs repository-local TypeScript and tsdown entry points through Node, performs no network access, and writes nowhere outside the checkout. npm/tarball installs consume the prebuilt `lib/` files and do not execute `prepare`; consumers that disable lifecycle scripts must use that channel rather than Git source. `pnpm pack --dry-run --json` runs lifecycle scripts; inspect its final file list and restore a development build afterward when the pack lifecycle cleans or replaces generated files.
 
 A package is ready for Git or npm only when every manifest-declared runtime and type entry exists after the relevant consumer lifecycle. Publishing, pushing, tagging, and registry operations remain separately authorized actions.

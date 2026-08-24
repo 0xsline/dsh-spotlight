@@ -29,6 +29,11 @@ dsh plugin --profile web add "@0xsline/dsh-spotlight"
 dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 ```
 
+Git 安装会执行包的 `prepare` 生命周期，因为生成的 `lib/` 文件不提交到仓库。
+该脚本只使用仓库本地的 TypeScript 和 tsdown 可执行文件删除并重建当前包的
+`lib/` 目录，不访问网络，也不写入仓库外部。若禁用了生命周期脚本，请安装
+npm 发布包；其中已包含构建好的 `lib/` 文件，安装时不会执行 `prepare`。
+
 然后启动 DSH Web，按 `⌘K` 或 `Ctrl+K` 即可使用：
 
 ```sh

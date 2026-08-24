@@ -35,6 +35,13 @@ Or from the Git source:
 dsh plugin --profile web add "github:0xsline/dsh-spotlight#main"
 ```
 
+The Git install runs the package's `prepare` lifecycle because generated
+`lib/` files are not committed. It deletes and recreates only this package's
+`lib/` directory with the repository-local TypeScript and tsdown executables;
+it does not access the network or write outside the checkout. If lifecycle
+scripts are disabled, install the npm release instead: it already contains the
+built `lib/` files and does not run `prepare` during installation.
+
 Then start DSH Web and press `⌘K` or `Ctrl+K`:
 
 ```sh
