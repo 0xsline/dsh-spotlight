@@ -1,7 +1,8 @@
 import { discoverActions, discoverVisibleActions, type SpotlightAction } from './discovery.ts'
 import type { SpotlightHost } from './host.ts'
 import {
-  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
+  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, selectionDelta,
+  shortcutFromEvent,
   type SpotlightShortcut,
 } from './keyboard.ts'
 import { capPerKind, searchCandidates } from './search.ts'
@@ -141,7 +142,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
     resetShortcut.setAttribute('aria-label', '恢复默认快捷键')
     resetShortcut.textContent = '恢复默认'
     const help = document.createElement('span')
-    help.innerHTML = '<kbd>↑↓</kbd> 选择&nbsp;&nbsp;<kbd>↵</kbd> 执行&nbsp;&nbsp;<kbd>esc</kbd> 关闭'
+    help.innerHTML = '<kbd>↑↓</kbd> <kbd>⌃N/P</kbd> <kbd>⌃J/K</kbd> 选择&nbsp;&nbsp;<kbd>↵</kbd> 执行&nbsp;&nbsp;<kbd>esc</kbd> 关闭'
     controls.append(shortcutButton, resetShortcut, help)
     footer.append(count, controls)
     panel.append(search, results, footer)
@@ -242,9 +243,11 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
     input.addEventListener('input', () => { active = 0; render() })
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.preventDefault(); close(); return }
-      if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      const delta = selectionDelta(event)
+      if (delta !== undefined) {
         event.preventDefault()
-        active = moveSelection(active, matches.length, event.key === 'ArrowDown' ? 1 : -1)
+        event.stopPropagation()
+        active = moveSelection(active, matches.length, delta)
         render()
         document.getElementById(`dsh-spotlight-option-${active}`)?.scrollIntoView({ block: 'nearest' })
         return
@@ -271,6 +274,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
   }
 
   const onGlobalKeydown = (event: KeyboardEvent): void => {
+    if (root !== undefined && selectionDelta(event) !== undefined) return
     if (recordingShortcut || !isSpotlightShortcut(event, shortcut)) return
     event.preventDefault()
     event.stopPropagation()

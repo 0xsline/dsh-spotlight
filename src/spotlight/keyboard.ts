@@ -67,6 +67,17 @@ export function isSpotlightShortcut(event: ShortcutEvent, shortcut?: SpotlightSh
     && event.shiftKey === shortcut.shiftKey
 }
 
+/** Resolve list navigation without stealing unmodified search input. */
+export function selectionDelta(event: ShortcutEvent): -1 | 1 | undefined {
+  const key = normalizedKey(event.key)
+  if (key === 'ArrowDown') return 1
+  if (key === 'ArrowUp') return -1
+  if (!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return undefined
+  if (key === 'n' || key === 'j') return 1
+  if (key === 'p' || key === 'k') return -1
+  return undefined
+}
+
 /** Move a list selection with wraparound. */
 export function moveSelection(current: number, length: number, delta: -1 | 1): number {
   if (length < 1) return -1

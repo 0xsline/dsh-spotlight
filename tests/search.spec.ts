@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
+  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, selectionDelta,
+  shortcutFromEvent,
 } from '../src/spotlight/keyboard.ts'
 import { searchCandidates, type SearchCandidate } from '../src/spotlight/search.ts'
 
@@ -40,6 +41,18 @@ describe('spotlight keyboard behavior', () => {
     expect(moveSelection(2, 3, 1)).toBe(0)
     expect(moveSelection(0, 3, -1)).toBe(2)
     expect(moveSelection(0, 0, 1)).toBe(-1)
+  })
+
+  it('maps arrows and control navigation keys without capturing plain typing', () => {
+    const event = { metaKey: false, ctrlKey: false, altKey: false, shiftKey: false }
+    expect(selectionDelta({ ...event, key: 'ArrowDown' })).toBe(1)
+    expect(selectionDelta({ ...event, key: 'ArrowUp' })).toBe(-1)
+    expect(selectionDelta({ ...event, key: 'n', ctrlKey: true })).toBe(1)
+    expect(selectionDelta({ ...event, key: 'j', ctrlKey: true })).toBe(1)
+    expect(selectionDelta({ ...event, key: 'p', ctrlKey: true })).toBe(-1)
+    expect(selectionDelta({ ...event, key: 'k', ctrlKey: true })).toBe(-1)
+    expect(selectionDelta({ ...event, key: 'j' })).toBeUndefined()
+    expect(selectionDelta({ ...event, key: 'n', ctrlKey: true, shiftKey: true })).toBeUndefined()
   })
 
   it('captures, validates, formats, and exactly matches a custom shortcut', () => {

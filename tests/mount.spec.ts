@@ -58,6 +58,34 @@ describe('spotlight mount', () => {
     dispose()
   })
 
+  it('navigates results with Control-N/P and Control-J/K', () => {
+    const host: SpotlightHost = {
+      sessions: fakeSessions({
+        ids: ['a', 'b'],
+        byId: {
+          a: { id: 'a', displayTitle: 'Alpha', running: false },
+          b: { id: 'b', displayTitle: 'Beta', running: false },
+        },
+        current: 'a',
+      }),
+    }
+    const { dispose } = mountSpotlight(host, document, window)
+    keydown('k', { ctrlKey: true })
+    const input = document.querySelector<HTMLInputElement>('[data-dsh-spotlight-input]')!
+
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }))
+    expect(input.getAttribute('aria-activedescendant')).toBe('dsh-spotlight-option-1')
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', ctrlKey: true, bubbles: true }))
+    expect(input.getAttribute('aria-activedescendant')).toBe('dsh-spotlight-option-0')
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', ctrlKey: true, bubbles: true }))
+    expect(input.getAttribute('aria-activedescendant')).toBe('dsh-spotlight-option-1')
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true }))
+    expect(input.getAttribute('aria-activedescendant')).toBe('dsh-spotlight-option-0')
+    expect(input.value).toBe('')
+    expect(document.querySelector('[data-dsh-spotlight-root]')).not.toBeNull()
+    dispose()
+  })
+
   it('filters results from the input value', () => {
     const { dispose } = mountSpotlight(hostWithSessions(), document, window)
     keydown('k', { ctrlKey: true })
