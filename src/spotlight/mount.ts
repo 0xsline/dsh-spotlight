@@ -241,6 +241,10 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
 
     input.addEventListener('input', () => { active = 0; render() })
     input.addEventListener('keydown', event => {
+      // Let IME Enter finish text composition instead of executing a result.
+      // keyCode 229 is the legacy composition signal emitted by some engines.
+      // oxlint-disable-next-line typescript/no-deprecated
+      if (event.isComposing || event.keyCode === 229) return
       if (event.key === 'Escape') { event.preventDefault(); close(); return }
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault()

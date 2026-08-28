@@ -58,6 +58,23 @@ describe('spotlight mount', () => {
     dispose()
   })
 
+  it('lets IME Enter commit composition without executing a result', () => {
+    const host = hostWithSessions()
+    const { dispose } = mountSpotlight(host, document, window)
+    keydown('k', { ctrlKey: true })
+    const input = document.querySelector<HTMLInputElement>('[data-dsh-spotlight-input]')!
+    const enter = new KeyboardEvent('keydown', {
+      key: 'Enter', isComposing: true, bubbles: true, cancelable: true,
+    })
+
+    input.dispatchEvent(enter)
+
+    expect(enter.defaultPrevented).toBe(false)
+    expect(host.sessions.open).not.toHaveBeenCalled()
+    expect(document.querySelector('[data-dsh-spotlight-root]')).not.toBeNull()
+    dispose()
+  })
+
   it('filters results from the input value', () => {
     const { dispose } = mountSpotlight(hostWithSessions(), document, window)
     keydown('k', { ctrlKey: true })
