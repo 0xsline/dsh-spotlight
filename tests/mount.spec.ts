@@ -103,7 +103,8 @@ describe('spotlight mount', () => {
   it('consumes the host theme alias tokens instead of invented names', () => {
     const { dispose } = mountSpotlight(hostWithSessions(), document, window)
     const css = document.getElementById('dsh-spotlight-style')?.textContent ?? ''
-    expect(css).toContain('--dsw-alias-bg-overlay')
+    expect(css).toContain('--dsw-alias-bg-layer-2')
+    expect(css).not.toContain('--dsw-alias-bg-overlay')
     expect(css).toContain('--dsw-alias-label-primary')
     expect(css).toContain('--dsw-alias-brand-primary')
     expect(css).not.toContain('--dsw-alias-bg-1')

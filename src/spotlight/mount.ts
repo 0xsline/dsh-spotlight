@@ -16,7 +16,7 @@ const KIND_LABEL: Record<SpotlightAction['kind'], string> = {
 /** The palette consumes the host theme's alias tokens so it follows light/dark and brand overrides. */
 const CSS = `
 [data-dsh-spotlight-root] { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: start center; padding-top: min(14vh, 120px); background: rgba(8, 10, 16, .48); backdrop-filter: blur(6px); font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; }
-[data-dsh-spotlight-panel] { width: min(680px, calc(100vw - 28px)); max-height: min(620px, calc(100vh - 48px)); overflow: hidden; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 18px; background: var(--dsw-alias-bg-overlay, #17191f); color: var(--dsw-alias-label-primary, #f5f7fb); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
+[data-dsh-spotlight-panel] { width: min(680px, calc(100vw - 28px)); max-height: min(620px, calc(100vh - 48px)); overflow: hidden; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 18px; background: var(--dsw-alias-bg-layer-2, #17191f); color: var(--dsw-alias-label-primary, #f5f7fb); box-shadow: 0 24px 80px rgba(0,0,0,.42); }
 [data-dsh-spotlight-search] { display: flex; align-items: center; gap: 12px; padding: 18px 18px 14px; border-bottom: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.1)); }
 [data-dsh-spotlight-search] svg { width: 20px; height: 20px; flex: none; color: var(--dsw-alias-label-secondary, #949aa8); }
 [data-dsh-spotlight-input] { width: 100%; border: 0; outline: 0; background: transparent; color: inherit; font: inherit; font-size: 17px; line-height: 1.5; }
