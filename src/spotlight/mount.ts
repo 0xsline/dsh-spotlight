@@ -1,7 +1,8 @@
 import { discoverActions, discoverVisibleActions, type SpotlightAction } from './discovery.ts'
 import type { SpotlightHost } from './host.ts'
 import {
-  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
+  defaultShortcut, directResultIndex, formatResultShortcut, formatShortcut, isSpotlightShortcut,
+  moveSelection, parseShortcut, shortcutFromEvent,
   type SpotlightShortcut,
 } from './keyboard.ts'
 import { capPerKind, searchCandidates } from './search.ts'
@@ -26,7 +27,9 @@ const CSS = `
 [data-dsh-spotlight-option][aria-selected="true"], [data-dsh-spotlight-option]:hover { background: color-mix(in srgb, var(--dsw-alias-brand-primary, #4d6bfe) 16%, transparent); }
 [data-dsh-spotlight-title] { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 620; }
 [data-dsh-spotlight-detail] { display: block; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--dsw-alias-label-secondary, #969dab); font-size: 12px; }
+[data-dsh-spotlight-accessory] { display: flex; align-items: center; gap: 7px; }
 [data-dsh-spotlight-kind] { padding: 3px 7px; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 999px; color: var(--dsw-alias-label-secondary, #a1a7b3); font-size: 11px; }
+[data-dsh-spotlight-result-shortcut] { min-width: 31px; padding: 3px 6px; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.12)); border-radius: 7px; background: var(--dsw-alias-bg-layer-1, rgba(255,255,255,.06)); color: var(--dsw-alias-label-secondary, #a1a7b3); font: 500 12px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI Symbol", sans-serif; font-variant-numeric: tabular-nums; text-align: center; }
 [data-dsh-spotlight-empty] { padding: 42px 18px; color: var(--dsw-alias-label-secondary, #969dab); text-align: center; font-size: 13px; }
 [data-dsh-spotlight-footer] { display: flex; justify-content: space-between; gap: 12px; padding: 10px 16px 12px; border-top: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.08)); color: var(--dsw-alias-label-secondary, #8f96a3); font-size: 11px; }
 [data-dsh-spotlight-footer] kbd { padding: 2px 5px; border: 1px solid var(--dsw-alias-border-l1, rgba(255,255,255,.14)); border-radius: 5px; background: rgba(255,255,255,.04); font: inherit; }
@@ -157,6 +160,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
     }
     let matches = searchCandidates(actions, '')
     let active = matches.length > 0 ? 0 : -1
+    let directResultIndexes: number[] = []
 
     const renderShortcut = (): void => {
       shortcutButton.textContent = recordingShortcut
@@ -198,6 +202,30 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
       action.run()
     }
 
+    const refreshDirectShortcuts = (): void => {
+      const options = [...results.querySelectorAll<HTMLElement>('[data-dsh-spotlight-option]')]
+      for (const option of options) {
+        option.querySelector('[data-dsh-spotlight-result-shortcut]')?.remove()
+      }
+      const viewport = results.getBoundingClientRect()
+      const visibleOptions = options.filter(option => {
+        const bounds = option.getBoundingClientRect()
+        return bounds.top >= viewport.top - 0.5 && bounds.bottom <= viewport.bottom + 0.5
+      }).slice(0, 9)
+      directResultIndexes = visibleOptions.flatMap(option => {
+        const index = Number(option.getAttribute('data-dsh-spotlight-result-index'))
+        return Number.isInteger(index) ? [index] : []
+      })
+      directResultIndexes.forEach((resultIndex, shortcutIndex) => {
+        const accessory = options[resultIndex]?.querySelector('[data-dsh-spotlight-accessory]')
+        if (accessory === null || accessory === undefined) return
+        const directShortcut = document.createElement('kbd')
+        directShortcut.setAttribute('data-dsh-spotlight-result-shortcut', '')
+        directShortcut.textContent = formatResultShortcut(shortcutIndex, applePlatform)
+        accessory.appendChild(directShortcut)
+      })
+    }
+
     const render = (): void => {
       matches = capPerKind(searchCandidates(actions, input.value, 200), 6)
       if (active >= matches.length) active = matches.length - 1
@@ -215,6 +243,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
           option.type = 'button'
           option.id = `dsh-spotlight-option-${index}`
           option.setAttribute('data-dsh-spotlight-option', '')
+          option.setAttribute('data-dsh-spotlight-result-index', String(index))
           option.setAttribute('role', 'option')
           const copy = document.createElement('span')
           const title = document.createElement('span')
@@ -224,10 +253,13 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
           detail.setAttribute('data-dsh-spotlight-detail', '')
           detail.textContent = item.detail ?? ''
           copy.append(title, detail)
+          const accessory = document.createElement('span')
+          accessory.setAttribute('data-dsh-spotlight-accessory', '')
           const kind = document.createElement('span')
           kind.setAttribute('data-dsh-spotlight-kind', '')
           kind.textContent = KIND_LABEL[item.kind]
-          option.append(copy, kind)
+          accessory.appendChild(kind)
+          option.append(copy, accessory)
           option.addEventListener('mousemove', () => {
             if (active !== index) { active = index; render() }
           })
@@ -237,16 +269,28 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
         input.setAttribute('aria-activedescendant', `dsh-spotlight-option-${active}`)
       }
       count.textContent = `${matches.length} 个结果`
+      refreshDirectShortcuts()
     }
 
+    results.addEventListener('scroll', refreshDirectShortcuts)
     input.addEventListener('input', () => { active = 0; render() })
     input.addEventListener('keydown', event => {
       if (event.key === 'Escape') { event.preventDefault(); close(); return }
+      const directIndex = directResultIndex(event)
+      if (directIndex !== undefined) {
+        event.preventDefault()
+        event.stopPropagation()
+        const matchedIndex = directResultIndexes[directIndex]
+        const action = matchedIndex === undefined ? undefined : matches[matchedIndex]?.item
+        if (action !== undefined) execute(action)
+        return
+      }
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault()
         active = moveSelection(active, matches.length, event.key === 'ArrowDown' ? 1 : -1)
         render()
         document.getElementById(`dsh-spotlight-option-${active}`)?.scrollIntoView({ block: 'nearest' })
+        refreshDirectShortcuts()
         return
       }
       if (event.key === 'Enter' && active >= 0) {
@@ -271,6 +315,7 @@ export function mountSpotlight(host: SpotlightHost, document: Document, window: 
   }
 
   const onGlobalKeydown = (event: KeyboardEvent): void => {
+    if (root !== undefined && directResultIndex(event) !== undefined) return
     if (recordingShortcut || !isSpotlightShortcut(event, shortcut)) return
     event.preventDefault()
     event.stopPropagation()

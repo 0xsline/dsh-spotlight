@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
-  defaultShortcut, formatShortcut, isSpotlightShortcut, moveSelection, parseShortcut, shortcutFromEvent,
+  defaultShortcut, directResultIndex, formatResultShortcut, formatShortcut, isSpotlightShortcut,
+  moveSelection, parseShortcut, shortcutFromEvent,
 } from '../src/spotlight/keyboard.ts'
 import { searchCandidates, type SearchCandidate } from '../src/spotlight/search.ts'
 
@@ -40,6 +41,18 @@ describe('spotlight keyboard behavior', () => {
     expect(moveSelection(2, 3, 1)).toBe(0)
     expect(moveSelection(0, 3, -1)).toBe(2)
     expect(moveSelection(0, 0, 1)).toBe(-1)
+  })
+
+  it('maps browser-safe Alt-Shift-number shortcuts to the first nine result slots', () => {
+    const event = { key: '¡', code: 'Digit1', metaKey: false, ctrlKey: false, altKey: true, shiftKey: true }
+    expect(directResultIndex(event)).toBe(0)
+    expect(directResultIndex({ ...event, key: '9', code: 'Digit9' })).toBe(8)
+    expect(directResultIndex({ ...event, code: 'Digit0' })).toBeUndefined()
+    expect(directResultIndex({ ...event, ctrlKey: true })).toBeUndefined()
+    expect(directResultIndex({ ...event, metaKey: true })).toBeUndefined()
+    expect(directResultIndex({ ...event, shiftKey: false })).toBeUndefined()
+    expect(formatResultShortcut(0, true)).toBe('⌥⇧1')
+    expect(formatResultShortcut(8, false)).toBe('Alt+Shift+9')
   })
 
   it('captures, validates, formats, and exactly matches a custom shortcut', () => {

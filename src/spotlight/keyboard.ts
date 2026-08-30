@@ -1,6 +1,7 @@
 /** Keyboard fields used by the global shortcut matcher. */
 export interface ShortcutEvent {
   key: string
+  code?: string
   metaKey: boolean
   ctrlKey: boolean
   altKey: boolean
@@ -65,6 +66,19 @@ export function isSpotlightShortcut(event: ShortcutEvent, shortcut?: SpotlightSh
     && event.ctrlKey === shortcut.ctrlKey
     && event.altKey === shortcut.altKey
     && event.shiftKey === shortcut.shiftKey
+}
+
+/** Map an exact Alt/Option-Shift plus physical digit gesture to a zero-based shortcut slot. */
+export function directResultIndex(event: ShortcutEvent): number | undefined {
+  if (!event.altKey || !event.shiftKey || event.metaKey || event.ctrlKey) return undefined
+  const codeMatch = /^Digit([1-9])$/.exec(event.code ?? '')
+  const digit = codeMatch?.[1] ?? (/^[1-9]$/.test(event.key) ? event.key : undefined)
+  return digit === undefined ? undefined : Number(digit) - 1
+}
+
+/** Format one direct result shortcut without using browser-reserved Command/Control-number keys. */
+export function formatResultShortcut(index: number, applePlatform: boolean): string {
+  return `${applePlatform ? '⌥⇧' : 'Alt+Shift+'}${index + 1}`
 }
 
 /** Move a list selection with wraparound. */
