@@ -33,7 +33,7 @@ export const inject = ['sessions', 'remote.commands', 'remote.pluginInventory', 
 function registerSpotlightCommand(commandUi: SpotlightCommandUi, open: () => void): () => void {
   return commandUi.register({
     name: 'spotlight',
-    description: '打开 Spotlight 命令面板 · Open the Spotlight palette',
+    description: () => '打开 Spotlight 命令面板 · Open the Spotlight palette',
     available: () => true,
     ui: {
       kind: 'popupSelect',
