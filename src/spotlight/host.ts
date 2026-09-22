@@ -78,7 +78,7 @@ export interface SpotlightSelectOption {
 /** Client command contribution shape accepted by the host's `commandUi` registry. */
 export interface SpotlightCommandContribution {
   name: string
-  description: string
+  description: () => string
   available(session: unknown): boolean
   ui: {
     kind: 'popupSelect'
